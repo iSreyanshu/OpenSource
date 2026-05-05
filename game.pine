@@ -1,0 +1,133 @@
+//@version=5
+indicator("TP-SL SESSION PRO", overlay=true)
+
+showSessionBreak = input.bool(true,"Session Break Lines")
+
+showAsia = input.bool(false,"Asia Session")
+showLondon = input.bool(false,"London Session")
+showNY = input.bool(false,"New York Session")
+
+showSessionHL = input.bool(false,"Mark Session High/Low")
+
+showAsiaBreakout = input.bool(false,"Asia Range Breakout Signals")
+showLondonManip = input.bool(false,"London Manipulation Detection")
+showNYSweep = input.bool(false,"NY Liquidity Sweep")
+
+showTPSL = input.bool(false,"TP SL Projector")
+
+showEMA100 = input.bool(false,"EMA 100")
+showEMA200 = input.bool(false,"EMA 200")
+showSMA100 = input.bool(false,"SMA 100")
+showSMA200 = input.bool(false,"SMA 200")
+
+//============================
+// ENTRY + TP SL
+//============================
+
+entry = input.price(0.0,"Manual Entry")
+
+atrLen = input.int(14)
+atrMult = input.float(1.5)
+
+atr = ta.atr(atrLen)
+
+tp1 = entry + atr*atrMult
+tp2 = entry + atr*atrMult*2
+tp3 = entry + atr*atrMult*3
+sl  = entry - atr*atrMult
+
+plot(showTPSL?tp1:na,color=color.green,style=plot.style_linebr)
+plot(showTPSL?tp2:na,color=color.green,style=plot.style_linebr)
+plot(showTPSL?tp3:na,color=color.green,style=plot.style_linebr)
+plot(showTPSL?sl:na,color=color.red,style=plot.style_linebr)
+plot(showTPSL?entry:na,color=color.yellow,linewidth=2)
+
+//============================
+// MOVING AVERAGES
+//============================
+
+ema100 = ta.ema(close,100)
+ema200 = ta.ema(close,200)
+
+sma100 = ta.sma(close,100)
+sma200 = ta.sma(close,200)
+
+plot(showEMA100?ema100:na,color=color.orange,linewidth=2)
+plot(showEMA200?ema200:na,color=color.blue,linewidth=2)
+
+plot(showSMA100?sma100:na,color=color.purple,linewidth=2)
+plot(showSMA200?sma200:na,color=color.teal,linewidth=2)
+
+//============================
+// SESSION TIMES
+//============================
+
+asia = not na(time(timeframe.period,"0000-0900"))
+london = not na(time(timeframe.period,"0700-1600"))
+ny = not na(time(timeframe.period,"1300-2200"))
+
+asiaStart = asia and not asia[1]
+londonStart = london and not london[1]
+nyStart = ny and not ny[1]
+
+//============================
+// SESSION BREAK LINES
+//============================
+
+if showSessionBreak
+    if showAsia and asiaStart
+        line.new(bar_index,low,bar_index,high,extend=extend.both,color=color.blue,style=line.style_dashed)
+
+    if showLondon and londonStart
+        line.new(bar_index,low,bar_index,high,extend=extend.both,color=color.orange,style=line.style_dashed)
+
+    if showNY and nyStart
+        line.new(bar_index,low,bar_index,high,extend=extend.both,color=color.red,style=line.style_dashed)
+
+//============================
+// SESSION HIGH LOW
+//============================
+
+var float asiaHigh=na
+var float asiaLow=na
+
+if asia
+    asiaHigh:=na(asiaHigh)?high:math.max(asiaHigh,high)
+    asiaLow:=na(asiaLow)?low:math.min(asiaLow,low)
+
+if not asia and asia[1]
+    if showSessionHL and showAsia
+        line.new(bar_index,asiaHigh,bar_index+1,asiaHigh,extend=extend.right,color=color.blue)
+        line.new(bar_index,asiaLow,bar_index+1,asiaLow,extend=extend.right,color=color.blue)
+    asiaHigh:=na
+    asiaLow:=na
+
+//============================
+// ASIA RANGE BREAKOUT
+//============================
+
+asiaBreakLong = showAsiaBreakout and not asia and close>asiaHigh
+asiaBreakShort = showAsiaBreakout and not asia and close<asiaLow
+
+plotshape(asiaBreakLong,title="Asia Breakout Buy",location=location.belowbar,color=color.green,style=shape.triangleup,size=size.small)
+plotshape(asiaBreakShort,title="Asia Breakout Sell",location=location.abovebar,color=color.red,style=shape.triangledown,size=size.small)
+
+//============================
+// LONDON MANIPULATION
+//============================
+
+londonManipUp = showLondonManip and london and high>asiaHigh
+londonManipDown = showLondonManip and london and low<asiaLow
+
+plotshape(londonManipUp,title="London Liquidity Grab High",location=location.abovebar,color=color.orange,style=shape.circle,size=size.tiny)
+plotshape(londonManipDown,title="London Liquidity Grab Low",location=location.belowbar,color=color.orange,style=shape.circle,size=size.tiny)
+
+//============================
+// NY LIQUIDITY SWEEP
+//============================
+
+nySweepHigh = showNYSweep and ny and high>ta.highest(high[1],10)
+nySweepLow = showNYSweep and ny and low<ta.lowest(low[1],10)
+
+plotshape(nySweepHigh,title="NY Sweep High",location=location.abovebar,color=color.red,style=shape.xcross,size=size.small)
+plotshape(nySweepLow,title="NY Sweep Low",location=location.belowbar,color=color.green,style=shape.xcross,size=size.small)
