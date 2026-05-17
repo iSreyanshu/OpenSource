@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Base Crypto Swap</title>
+    <!-- Tailwind CSS for Modern UI -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for Beautiful Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Ethers.js v6 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js"></script>
+    <!-- Axios -->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body class="bg-slate-900 text-white font-sans min-h-screen flex items-center justify-center p-4">
+
+    <!-- Swap Card Container -->
+    <div class="w-full max-w-md bg-slate-800 rounded-3xl p-6 shadow-2xl border border-slate-700">
+        
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-6">
+            <div class="flex items-center gap-2">
+                <i class="fa-solid fa-right-left text-blue-500 text-2xl animate-pulse"></i>
+                <h1 class="text-xl font-bold tracking-wide">Base Swap</h1>
+            </div>
+            <button id="connectWallet" class="bg-blue-600 hover:bg-blue-700 text-sm font-medium py-2 px-4 rounded-2xl transition-all duration-200 flex items-center gap-2">
+                <i class="fa-solid fa-wallet"></i>
+                <span id="walletText">Connect Wallet</span>
+            </button>
+        </div>
+
+        <!-- From Token Box (USDC) -->
+        <div class="bg-slate-900 p-4 rounded-2xl mb-2 border border-slate-700/50">
+            <div class="flex justify-between text-xs text-slate-400 mb-1">
+                <span>You Pay</span>
+                <span id="usdcBalance">Balance: 0.00</span>
+            </div>
+            <div class="flex justify-between items-center">
+                <input id="inputAmount" type="number" placeholder="0.0" class="bg-transparent text-2xl font-semibold w-full focus:outline-none text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" />
+                <div class="flex items-center gap-2 bg-slate-800 py-1.5 px-3 rounded-xl border border-slate-700">
+                    <!-- USDC Official Logo icon from crypto icons -->
+                    <img src="https://cryptologos.cc/logos/usd-coin-usdc-logo.png" class="w-5 h-5 rounded-full" alt="USDC">
+                    <span class="font-bold text-sm">USDC</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Swap Direction Icon -->
+        <div class="flex justify-center -my-4 relative z-10">
+            <button class="bg-slate-800 border-4 border-slate-900 p-2 rounded-xl text-blue-500 hover:text-blue-400 transition-colors">
+                <i class="fa-solid fa-arrow-down"></i>
+            </button>
+        </div>
+
+        <!-- To Token Box (ETH) -->
+        <div class="bg-slate-900 p-4 rounded-2xl mt-2 mb-4 border border-slate-700/50">
+            <div class="flex justify-between text-xs text-slate-400 mb-1">
+                <span>You Receive (Estimated)</span>
+                <span id="ethBalance">Balance: 0.00</span>
+            </div>
+            <div class="flex justify-between items-center">
+                <span id="outputAmount" class="text-2xl font-semibold text-slate-400">0.0</span>
+                <div class="flex items-center gap-2 bg-slate-800 py-1.5 px-3 rounded-xl border border-slate-700">
+                    <img src="https://cryptologos.cc/logos/ethereum-eth-logo.png" class="w-5 h-5 rounded-full" alt="ETH">
+                    <span class="font-bold text-sm">ETH</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Swap Details Info Box -->
+        <div id="detailsBox" class="hidden text-xs text-slate-400 space-y-2 p-3 bg-slate-900/50 rounded-xl mb-4 border border-slate-800">
+            <div class="flex justify-between">
+                <span>Estimated Gas:</span>
+                <span id="gasCost" class="text-slate-200">0.00 ETH</span>
+            </div>
+            <div class="flex justify-between">
+                <span>Slippage Tolerance:</span>
+                <span class="text-slate-200">1%</span>
+            </div>
+        </div>
+
+        <!-- Status/Error Logs -->
+        <div id="statusLog" class="text-xs text-center text-amber-400 mb-4 font-medium hidden"></div>
+
+        <!-- Action Button -->
+        <button id="actionButton" disabled class="w-full bg-slate-700 text-slate-400 cursor-not-allowed font-bold py-4 rounded-2xl transition-all duration-200 text-center">
+            Connect Wallet First
+        </button>
+    </div>
+
+    <!-- JavaScript Logic -->
+    <script>
+        const CHAIN_ID = 8453; // Base Mainnet
+        const TOKENS = {
+            ETH: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE',
+            USDC: '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
+        };
+        const API_BASE = `https://api.1inch.io/v5.0/${CHAIN_ID}`;
+
+        let provider, signer, userAddress;
+        let usdcContract;
+        const erc20Abi = [
+            'function approve(address spender, uint256 amount) returns (bool)',
+            'function allowance(address owner, address spender) view returns (uint256)',
+            'function balanceOf(address account) view returns (uint256)'
+        ];
+
+        // DOM Elements
+        const btnConnect = document.getElementById('connectWallet');
+        const txtWallet = document.getElementById('walletText');
+        const btnAction = document.getElementById('actionButton');
+        const inputAmount = document.getElementById('inputAmount');
+        const outputAmount = document.getElementById('outputAmount');
+        const usdcBalanceEl = document.getElementById('usdcBalance');
+        const ethBalanceEl = document.getElementById('ethBalance');
+        const detailsBox = document.getElementById('detailsBox');
+        const gasCostEl = document.getElementById('gasCost');
+        const statusLog = document.getElementById('statusLog');
+
+        // 1. Wallet Connection
+        async function connectWallet() {
+            if (!window.ethereum) {
+                alert('कृपया MetaMask इंस्टॉल करें!');
+                return;
+            }
+            try {
+                showStatus('Connecting to Wallet...');
+                provider = new ethers.BrowserProvider(window.ethereum);
+                
+                // Request network switch to Base (Chain ID 8453)
+                try {
+                    await window.ethereum.request({
+                        method: 'wallet_switchEthereumChain',
+                        params: [{ chainId: '0x2105' }], // 8453 in Hex
+                    });
+                } catch (switchError) {
+                    showStatus('कृपया अपने वॉलेट को Base Network पर स्विच करें');
+                    return;
+                }
+
+                const accounts = await provider.send("eth_requestAccounts", []);
+                signer = await provider.getSigner();
+                userAddress = accounts[0];
+
+                txtWallet.innerText = `${userAddress.substring(0, 6)}...${userAddress.substring(38)}`;
+                btnConnect.classList.replace('bg-blue-600', 'bg-slate-700');
+                
+                usdcContract = new ethers.Contract(TOKENS.USDC, erc20Abi, signer);
+                
+                await updateBalances();
+                hideStatus();
+                updateActionButtonState();
+            } catch (err) {
+                showStatus('कनेक्शन फ़ेल हुआ: ' + err.message);
+            }
+        }
+
+        // 2. Fetch Balances
+        async function updateBalances() {
+            if (!userAddress) return;
+            try {
+                const ethBal = await provider.getBalance(userAddress);
+                const usdcBal = await usdcContract.balanceOf(userAddress);
+
+                ethBalanceEl.innerText = `Balance: ${parseFloat(ethers.formatEther(ethBal)).toFixed(4)}`;
+                usdcBalanceEl.innerText = `Balance: ${parseFloat(ethers.formatUnits(usdcBal, 6)).toFixed(2)}`;
+            } catch (err) {
+                console.error("Balance fetch error:", err);
+            }
+        }
+
+        // 3. Get Live Quote From 1inch
+        async function fetchQuote() {
+            const amount = inputAmount.value;
+            if (!amount || amount <= 0) {
+                outputAmount.innerText = '0.0';
+                detailsBox.classList.add('hidden');
+                return;
+            }
+
+            try {
+                const amountInRaw = ethers.parseUnits(amount, 6).toString();
+                const res = await axios.get(`${API_BASE}/quote`, {
+                    params: { fromTokenAddress: TOKENS.USDC, toTokenAddress: TOKENS.ETH, amount: amountInRaw }
+                });
+
+                outputAmount.innerText = parseFloat(ethers.formatEther(res.data.toTokenAmount)).toFixed(6);
+                
+                // Estimate approximate Gas cost
+                const feeData = await provider.getFeeData();
+                const estimatedGas = BigInt(res.data.estimatedGas);
+                const gasPrice = feeData.gasPrice || BigInt(0);
+                gasCostEl.innerText = `${parseFloat(ethers.formatEther(estimatedGas * gasPrice)).toFixed(6)} ETH`;
+                
+                detailsBox.classList.remove('hidden');
+            } catch (err) {
+                console.error("Quote fetching failed:", err);
+            }
+        }
+
+        // 4. Executing Swap & Approval
+        async function startSwap() {
+            const amount = inputAmount.value;
+            if (!amount) return;
+
+            try {
+                setLoadingState(true);
+                const amountInRaw = ethers.parseUnits(amount, 6);
+
+                // Step 4a: Check Router Address
+                let routerAddress = '0x1111111254eeb25477b68fb85ed929f73a960582'; // Default fallback
+                try {
+                    const spenderRes = await axios.get(`${API_BASE}/approve/spender`);
+                    routerAddress = spenderRes.data.address;
+                } catch(e) {}
+
+                // Step 4b: Handle Allowance/Approval
+                showStatus('Checking USDC Allowance...');
+                const allowance = await usdcContract.allowance(userAddress, routerAddress);
+                
+                if (allowance < amountInRaw) {
+                    showStatus('Approving USDC in wallet...');
+                    const txApprove = await usdcContract.approve(routerAddress, amountInRaw);
+                    await txApprove.wait();
+                    showStatus('✓ USDC Approved successfully!');
+                }
+
+                // Step 4c: Fetch Swap Data & Execute
+                showStatus('Preparing Swap Transaction...');
+                const swapRes = await axios.get(`${API_BASE}/swap`, {
+                    params: {
+                        fromTokenAddress: TOKENS.USDC,
+                        toTokenAddress: TOKENS.ETH,
+                        amount: amountInRaw.toString(),
+                        fromAddress: userAddress,
+                        slippage: 1,
+                        disableEstimate: true
+                    }
+                });
+
+                showStatus('Confirm Swap in your Wallet...');
+                const txData = swapRes.data.tx;
+                const txSwap = await signer.sendTransaction({
+                    to: txData.to,
+                    data: txData.data,
+                    value: txData.value,
+                    gasLimit: txData.gas || 300000
+                });
+
+                showStatus('Waiting for blockchain confirmation...');
+                await txSwap.wait();
+                
+                showStatus('🎉 Swap Completed Successfully!', 'text-green-400');
+                inputAmount.value = '';
+                outputAmount.innerText = '0.0';
+                await updateBalances();
+
+            } catch (err) {
+                showStatus(`❌ Swap Failed: ${err.message}`, 'text-red-400');
+            } finally {
+                setLoadingState(false);
+            }
+        }
+
+        // --- Helper Utilities ---
+        function updateActionButtonState() {
+            if (userAddress) {
+                btnAction.disabled = false;
+                btnAction.innerText = 'Swap USDC for ETH';
+                btnAction.className = "w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl transition-all duration-200 text-center shadow-lg shadow-blue-600/30 cursor-pointer";
+            }
+        }
+
+        function setLoadingState(isLoading) {
+            if(isLoading) {
+                btnAction.disabled = true;
+                btnAction.innerText = 'Processing Swap...';
+                btnAction.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                btnAction.disabled = false;
+                btnAction.innerText = 'Swap USDC for ETH';
+                btnAction.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }
+
+        function showStatus(msg, colorClass = 'text-amber-400') {
+            statusLog.innerText = msg;
+            statusLog.className = `text-xs text-center ${colorClass} mb-4 font-medium block`;
+        }
+
+        function hideStatus() {
+            statusLog.classList.add('hidden');
+        }
+
+        // Event Listeners
+        btnConnect.addEventListener('click', connectWallet);
+        inputAmount.addEventListener('input', fetchQuote);
+        btnAction.addEventListener('click', startSwap);
+    </script>
+</body>
+</html>
