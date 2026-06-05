@@ -3,83 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GraphQL Captcha Test Client</title>
+    <title>Modern GraphQL Captcha Client</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        /* Custom tracking for clean captcha input */
+        .captcha-letter-spacing { letter-spacing: 0.25em; }
+    </style>
 </head>
-<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+<body class="bg-slate-900 text-slate-100 min-h-screen flex items-center justify-center p-4 selection:bg-indigo-500 selection:text-white">
 
-    <div class="bg-white p-6 rounded-2xl shadow-lg w-full max-w-md border border-gray-200">
-        <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Captcha Verification Test</h2>
+    <div class="bg-slate-800 border border-slate-700/60 p-6 rounded-2xl shadow-2xl w-full max-w-md backdrop-blur-md">
+        
+        <div class="text-center mb-6">
+            <h2 class="text-2xl font-bold bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">
+                GraphQL Captcha Test
+            </h2>
+            <p class="text-xs text-slate-400 mt-1">Modern Async/Await Fetch Implementation</p>
+        </div>
 
-        <div class="mb-6">
-            <button id="fetch-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-lg transition duration-200 cursor-pointer mb-4">
-                🔄 Generate New Captcha
-            </button>
-            
-            <div id="captcha-container" class="hidden bg-gray-50 border border-gray-300 rounded-lg p-4 flex flex-col items-center justify-center min-h-[100px]">
-                <p class="text-xs text-gray-400 mb-2 font-mono" id="captcha-meta"></p>
-                <div id="captcha-image-wrapper" class="bg-white p-2 rounded border border-gray-200 shadow-sm max-w-full"></div>
+        <div class="space-y-4">
+            <div id="captcha-card" class="bg-slate-900/50 border border-slate-700 rounded-xl p-4 flex flex-col items-center justify-center min-h-[140px] relative overflow-hidden group">
+                
+                <div id="captcha-placeholder" class="text-center text-sm text-slate-500 py-6">
+                    🔒 Click generate to load security challenge
+                </div>
+
+                <div id="captcha-meta" class="hidden absolute top-2 right-2 text-[10px] font-mono text-slate-500 bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
+                    <span id="meta-algo"></span> | <span id="meta-expiry"></span>s
+                </div>
+
+                <div id="captcha-wrapper" class="hidden bg-white p-3 rounded-lg shadow-inner max-w-full transform transition-all duration-300 hover:scale-[1.02]">
+                    </div>
+            </div>
+
+            <div class="space-y-3">
+                <button id="btn-generate" class="w-full bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-medium py-3 px-4 rounded-xl shadow-lg shadow-indigo-900/30 transition-all duration-200 active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2">
+                    <span id="gen-icon">🔄</span> <span id="gen-text">Generate Captcha</span>
+                </button>
+
+                <form id="verify-form" class="space-y-3 hidden opacity-0 transition-opacity duration-300">
+                    <div class="relative">
+                        <input type="text" id="captcha-input" autocomplete="off" required placeholder="ENTER CODE" 
+                               class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-center font-black uppercase text-xl text-cyan-400 placeholder:text-slate-600 placeholder:font-normal placeholder:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all captcha-letter-spacing">
+                    </div>
+
+                    <button type="submit" id="btn-verify" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-3 px-4 rounded-xl shadow-lg shadow-emerald-900/20 transition-all duration-200 active:scale-[0.98] cursor-pointer">
+                        Verify Code
+                    </button>
+                </form>
             </div>
         </div>
 
-        <form id="verify-form" class="space-y-4 hidden">
-            <div>
-                <label for="captcha-input" class="block text-sm font-medium text-gray-700 mb-1">Enter Captcha Code</label>
-                <input type="text" id="captcha-input" required placeholder="Ex: ABC123" 
-                       class="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase tracking-widest font-bold text-center">
-            </div>
+        <div id="alert-box" class="mt-4 p-4 rounded-xl text-sm font-medium hidden border transition-all duration-300"></div>
 
-            <button type="submit" id="verify-btn" class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2.5 px-4 rounded-lg transition duration-200 cursor-pointer">
-                ✅ Verify Captcha
+        <div class="mt-6 border-t border-slate-700/50 pt-4">
+            <button id="btn-logs" class="text-xs text-slate-400 hover:text-indigo-400 transition-colors duration-150 flex items-center gap-1 cursor-pointer font-mono">
+                ▶ Show Live Server JSON Logs
             </button>
-        </form>
-
-        <div id="status-box" class="mt-6 p-4 rounded-lg hidden text-sm font-medium"></div>
-
-        <div class="mt-4">
-            <button id="toggle-logs" class="text-xs text-blue-500 hover:underline cursor-pointer">Show Technical Logs</button>
-            <pre id="logs" class="hidden mt-2 p-3 bg-gray-900 text-green-400 text-xs rounded-lg overflow-x-auto max-h-48 font-mono"></pre>
+            <pre id="log-console" class="hidden mt-3 p-3 bg-slate-950 text-cyan-400 text-[11px] rounded-lg overflow-x-auto max-h-48 font-mono border border-slate-800 leading-relaxed"></pre>
         </div>
     </div>
 
     <script>
         const API_URL = 'https://capssv2.vercel.app/api/graphql';
         
-        // State management
-        let currentCaptchaTokens = {
-            token: '',
-            csrfToken: ''
-        };
+        // App Memory State
+        let activeCaptchaState = null;
 
-        // DOM Elements
-        const fetchBtn = document.getElementById('fetch-btn');
-        const captchaContainer = document.getElementById('captcha-container');
-        const captchaImageWrapper = document.getElementById('captcha-image-wrapper');
-        const captchaMeta = document.getElementById('captcha-meta');
-        const verifyForm = document.getElementById('verify-form');
-        const captchaInput = document.getElementById('captcha-input');
-        const statusBox = document.getElementById('status-box');
-        const logsPre = document.getElementById('logs');
-        const toggleLogsBtn = document.getElementById('toggle-logs');
+        // --- CORE API SERVICES (Clean Async/Await Logic) ---
 
-        // Helper to print logs
-        function logData(title, data) {
-            console.log(title, data);
-            logsPre.textContent = `// ${title}\n` + JSON.stringify(data, null, 2) + `\n\n` + logsPre.textContent;
-        }
-
-        // Toggle Logs visibility
-        toggleLogsBtn.addEventListener('click', () => {
-            logsPre.classList.toggle('hidden');
-            toggleLogsBtn.textContent = logsPre.classList.contains('hidden') ? 'Show Technical Logs' : 'Hide Technical Logs';
-        });
-
-        // 1. Fetch Captcha Query
-        async function fetchCaptcha() {
-            statusBox.classList.add('hidden');
-            fetchBtn.disabled = true;
-            fetchBtn.textContent = 'Generating...';
-
+        async function generateCaptchaService() {
             const query = `
                 query {
                     generateCaptcha {
@@ -94,62 +87,19 @@
                 }
             `;
 
-            try {
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ query })
-                });
-
-                const result = await response.json();
-                logData("Fetch Response", result);
-
-                if (result.errors) {
-                    throw new Error(result.errors[0].message);
-                }
-
-                const captcha = result.data.generateCaptcha;
-                
-                // Store tokens for verification step
-                currentCaptchaTokens.token = captcha.token;
-                currentCaptchaTokens.csrfToken = captcha.csrfToken;
-
-                // Render Image (Base64 SVG or Standard Base64 Image)
-                captchaImageWrapper.innerHTML = captcha.image.startsWith('<svg') 
-                    ? captcha.image  // If raw SVG string
-                    : `<img src="${captcha.image}" alt="Captcha Code" class="h-16" />`; // If Base64 string
-
-                captchaMeta.textContent = `Algo: ${captcha.algorithm} | Expires: ${captcha.expiresIn}s`;
-                
-                // Show elements
-                captchaContainer.classList.remove('hidden');
-                verifyForm.classList.remove('hidden');
-                captchaInput.value = '';
-                captchaInput.focus();
-
-            } catch (error) {
-                logData("Fetch Error", error.message);
-                statusBox.className = "mt-6 p-4 rounded-lg text-sm font-medium bg-red-100 text-red-800";
-                statusBox.textContent = "Error loading captcha: " + error.message;
-                statusBox.classList.remove('hidden');
-            } finally {
-                fetchBtn.disabled = false;
-                fetchBtn.textContent = '🔄 Generate New Captcha';
-            }
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                credentials: 'include', // Handles HTTP sessions/cookies if needed
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query })
+            });
+            
+            const result = await response.json();
+            if (result.errors) throw new Error(result.errors[0].message);
+            return result.data.generateCaptcha;
         }
 
-        // 2. Verify Captcha Mutation
-        async function verifyCaptcha(e) {
-            e.preventDefault();
-            const userInput = captchaInput.value.trim();
-            
-            if (!userInput) return;
-
-            statusBox.classList.add('hidden');
-            const verifyBtn = document.getElementById('verify-btn');
-            verifyBtn.disabled = true;
-            verifyBtn.textContent = 'Verifying...';
-
+        async function verifyCaptchaService(token, input, csrfToken) {
             const mutation = `
                 mutation VerifyCaptcha($token: String!, $input: String!, $csrfToken: String!) {
                     verifyCaptcha(token: $token, input: $input, csrfToken: $csrfToken) {
@@ -160,51 +110,143 @@
                 }
             `;
 
-            const variables = {
-                token: currentCaptchaTokens.token,
-                input: userInput,
-                csrfToken: currentCaptchaTokens.csrfToken
-            };
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    query: mutation,
+                    variables: { token, input, csrfToken }
+                })
+            });
 
-            try {
-                const response = await fetch(API_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ query: mutation, variables })
-                });
-
-                const result = await response.json();
-                logData("Verify Response", result);
-
-                if (result.errors) {
-                    throw new Error(result.errors[0].message);
-                }
-
-                const verification = result.data.verifyCaptcha;
-
-                if (verification.success) {
-                    statusBox.className = "mt-6 p-4 rounded-lg text-sm font-medium bg-green-100 text-green-800 border border-green-300";
-                    statusBox.innerHTML = `<strong>🎉 Success!</strong> ${verification.message}`;
-                } else {
-                    statusBox.className = "mt-6 p-4 rounded-lg text-sm font-medium bg-red-100 text-red-800 border border-red-300";
-                    statusBox.innerHTML = `<strong>❌ Failed:</strong> ${verification.message || 'Wrong Code!'}`;
-                }
-                statusBox.classList.remove('hidden');
-
-            } catch (error) {
-                logData("Verify Error", error.message);
-                statusBox.className = "mt-6 p-4 rounded-lg text-sm font-medium bg-red-100 text-red-800";
-                statusBox.textContent = "Verification Error: " + error.message;
-                statusBox.classList.remove('hidden');
-            } finally {
-                verifyBtn.disabled = false;
-                verifyBtn.textContent = '✅ Verify Captcha';
-            }
+            const result = await response.json();
+            if (result.errors) throw new Error(result.errors[0].message);
+            return result.data.verifyCaptcha;
         }
 
-        // Event Listeners
-        fetchBtn.addEventListener('click', fetchCaptcha);
-        verifyForm.addEventListener('submit', verifyCaptcha);
+
+        // --- UI & EVENT CONTROLLERS ---
+
+        const dom = {
+            btnGen: document.getElementById('btn-generate'),
+            genText: document.getElementById('gen-text'),
+            genIcon: document.getElementById('gen-icon'),
+            placeholder: document.getElementById('captcha-placeholder'),
+            wrapper: document.getElementById('captcha-wrapper'),
+            meta: document.getElementById('captcha-meta'),
+            algo: document.getElementById('meta-algo'),
+            expiry: document.getElementById('meta-expiry'),
+            form: document.getElementById('verify-form'),
+            input: document.getElementById('captcha-input'),
+            btnVerify: document.getElementById('btn-verify'),
+            alert: document.getElementById('alert-box'),
+            btnLogs: document.getElementById('btn-logs'),
+            console: document.getElementById('log-console')
+        };
+
+        // Utility: Update Live UI Logger
+        function writeToConsole(label, data) {
+            console.log(`[${label}]`, data);
+            const timestamp = new Date().toLocaleTimeString();
+            dom.console.textContent = `[${timestamp}] ${label}:\n${JSON.stringify(data, null, 2)}\n\n` + dom.console.textContent;
+        }
+
+        // Utility: Display Success/Error Message banners
+        function showAlert(type, text) {
+            dom.alert.classList.remove('hidden', 'bg-emerald-950/40', 'text-emerald-400', 'border-emerald-800/60', 'bg-rose-950/40', 'text-rose-400', 'border-rose-800/60');
+            if (type === 'success') {
+                dom.alert.classList.add('bg-emerald-950/40', 'text-emerald-400', 'border-emerald-800/60');
+            } else {
+                dom.alert.classList.add('bg-rose-950/40', 'text-rose-400', 'border-rose-800/60');
+            }
+            dom.alert.innerHTML = text;
+            dom.alert.classList.remove('hidden');
+        }
+
+        // Action 1: Handle Generate Trigger
+        dom.btnGen.addEventListener('click', async () => {
+            dom.alert.classList.add('hidden');
+            dom.btnGen.disabled = true;
+            dom.genText.textContent = 'Generating...';
+            dom.genIcon.textContent = '⏳';
+
+            try {
+                // Call dynamic async function
+                const captchaData = await generateCaptchaService();
+                activeCaptchaState = captchaData; // Store references securely in state
+                writeToConsole("GENERATE CAPTCHA SUCCESS", captchaData);
+
+                // Safe image population
+                dom.wrapper.innerHTML = captchaData.image.startsWith('<svg') 
+                    ? captchaData.image 
+                    : `<img src="${captchaData.image}" alt="Captcha Challenge" class="h-12 object-contain" />`;
+
+                // Update UI layout states
+                dom.placeholder.classList.add('hidden');
+                dom.wrapper.classList.remove('hidden');
+                dom.algo.textContent = captchaData.algorithm;
+                dom.expiry.textContent = captchaData.expiresIn;
+                dom.meta.classList.remove('hidden');
+                
+                // Show form smoothly
+                dom.form.classList.remove('hidden');
+                setTimeout(() => dom.form.classList.remove('opacity-0'), 50);
+                
+                dom.input.value = '';
+                dom.input.focus();
+
+            } catch (err) {
+                writeToConsole("GENERATION ERROR", err.message);
+                showAlert('error', `<strong>Generation Failed:</strong> ${err.message}`);
+            } finally {
+                dom.btnGen.disabled = false;
+                dom.genText.textContent = 'Regenerate Captcha';
+                dom.genIcon.textContent = '🔄';
+            }
+        });
+
+        // Action 2: Handle Verify Form Submit
+        dom.form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const userInput = dom.input.value.trim();
+            if (!userInput || !activeCaptchaState) return;
+
+            dom.alert.classList.add('hidden');
+            dom.btnVerify.disabled = true;
+            dom.btnVerify.textContent = 'Validating...';
+
+            try {
+                // Call verification async service mapping state keys
+                const verificationResult = await verifyCaptchaService(
+                    activeCaptchaState.token,
+                    userInput,
+                    activeCaptchaState.csrfToken
+                );
+                
+                writeToConsole("VERIFY CAPTCHA RESULT", verificationResult);
+
+                if (verificationResult.success) {
+                    showAlert('success', `<strong>🎉 Match Verified!</strong> ${verificationResult.message}`);
+                } else {
+                    showAlert('error', `<strong>❌ Wrong Code:</strong> ${verificationResult.message || 'Please try again.'}`);
+                }
+
+            } catch (err) {
+                writeToConsole("VERIFICATION SYSTEM ERROR", err.message);
+                showAlert('error', `<strong>System Error:</strong> ${err.message}`);
+            } finally {
+                dom.btnVerify.disabled = false;
+                dom.btnVerify.textContent = 'Verify Code';
+            }
+        });
+
+        // Toggle logs accordion drawer
+        dom.btnLogs.addEventListener('click', () => {
+            const isHidden = dom.console.classList.contains('hidden');
+            dom.console.classList.toggle('hidden');
+            dom.btnLogs.textContent = isHidden ? '▼ Hide Live Server JSON Logs' : '▶ Show Live Server JSON Logs';
+        });
     </script>
 </body>
 </html>
