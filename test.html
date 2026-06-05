@@ -6,7 +6,6 @@
     <title>Modern GraphQL Captcha Client</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
-        /* Custom tracking for clean captcha input */
         .captcha-letter-spacing { letter-spacing: 0.25em; }
     </style>
 </head>
@@ -18,7 +17,7 @@
             <h2 class="text-2xl font-bold bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">
                 GraphQL Captcha Test
             </h2>
-            <p class="text-xs text-slate-400 mt-1">Modern Async/Await Fetch Implementation</p>
+            <p class="text-xs text-slate-400 mt-1">Minified Network Payload Implementation</p>
         </div>
 
         <div class="space-y-4">
@@ -32,8 +31,7 @@
                     <span id="meta-algo"></span> | <span id="meta-expiry"></span>s
                 </div>
 
-                <div id="captcha-wrapper" class="hidden bg-white p-3 rounded-lg shadow-inner max-w-full transform transition-all duration-300 hover:scale-[1.02]">
-                    </div>
+                <div id="captcha-wrapper" class="hidden bg-white p-3 rounded-lg shadow-inner max-w-full transform transition-all duration-300 hover:scale-[1.02]"></div>
             </div>
 
             <div class="space-y-3">
@@ -70,10 +68,10 @@
         // App Memory State
         let activeCaptchaState = null;
 
-        // --- CORE API SERVICES (Clean Async/Await Logic) ---
+        // --- CORE API SERVICES (Clean & Minified Payload Logic) ---
 
         async function generateCaptchaService() {
-            const query = `
+            const rawQuery = `
                 query {
                     generateCaptcha {
                         token
@@ -87,10 +85,14 @@
                 }
             `;
 
+            // ⚡ Regex used to strip tabs, newlines, and multi-spaces into a single clean space
+            const cleanQuery = rawQuery.replace(/\s+/g, ' ').trim();
+
             const response = await fetch(API_URL, {
                 method: 'POST',
+                credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ query })
+                body: JSON.stringify({ query: cleanQuery }) // Sends minified string
             });
             
             const result = await response.json();
@@ -99,7 +101,7 @@
         }
 
         async function verifyCaptchaService(token, input, csrfToken) {
-            const mutation = `
+            const rawMutation = `
                 mutation VerifyCaptcha($token: String!, $input: String!, $csrfToken: String!) {
                     verifyCaptcha(token: $token, input: $input, csrfToken: $csrfToken) {
                         success
@@ -109,11 +111,15 @@
                 }
             `;
 
+            // ⚡ Regex used to strip tabs, newlines, and multi-spaces into a single clean space
+            const cleanMutation = rawMutation.replace(/\s+/g, ' ').trim();
+
             const response = await fetch(API_URL, {
                 method: 'POST',
+                credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    query: mutation,
+                    query: cleanMutation, // Sends minified string
                     variables: { token, input, csrfToken }
                 })
             });
@@ -143,14 +149,12 @@
             console: document.getElementById('log-console')
         };
 
-        // Utility: Update Live UI Logger
         function writeToConsole(label, data) {
             console.log(`[${label}]`, data);
             const timestamp = new Date().toLocaleTimeString();
             dom.console.textContent = `[${timestamp}] ${label}:\n${JSON.stringify(data, null, 2)}\n\n` + dom.console.textContent;
         }
 
-        // Utility: Display Success/Error Message banners
         function showAlert(type, text) {
             dom.alert.classList.remove('hidden', 'bg-emerald-950/40', 'text-emerald-400', 'border-emerald-800/60', 'bg-rose-950/40', 'text-rose-400', 'border-rose-800/60');
             if (type === 'success') {
@@ -170,24 +174,20 @@
             dom.genIcon.textContent = '⏳';
 
             try {
-                // Call dynamic async function
                 const captchaData = await generateCaptchaService();
-                activeCaptchaState = captchaData; // Store references securely in state
+                activeCaptchaState = captchaData; 
                 writeToConsole("GENERATE CAPTCHA SUCCESS", captchaData);
 
-                // Safe image population
                 dom.wrapper.innerHTML = captchaData.image.startsWith('<svg') 
                     ? captchaData.image 
                     : `<img src="${captchaData.image}" alt="Captcha Challenge" class="h-12 object-contain" />`;
 
-                // Update UI layout states
                 dom.placeholder.classList.add('hidden');
                 dom.wrapper.classList.remove('hidden');
                 dom.algo.textContent = captchaData.algorithm;
                 dom.expiry.textContent = captchaData.expiresIn;
                 dom.meta.classList.remove('hidden');
                 
-                // Show form smoothly
                 dom.form.classList.remove('hidden');
                 setTimeout(() => dom.form.classList.remove('opacity-0'), 50);
                 
@@ -215,7 +215,6 @@
             dom.btnVerify.textContent = 'Validating...';
 
             try {
-                // Call verification async service mapping state keys
                 const verificationResult = await verifyCaptchaService(
                     activeCaptchaState.token,
                     userInput,
@@ -239,7 +238,7 @@
             }
         });
 
-        // Toggle logs accordion drawer
+        // Toggle logs drawer
         dom.btnLogs.addEventListener('click', () => {
             const isHidden = dom.console.classList.contains('hidden');
             dom.console.classList.toggle('hidden');
