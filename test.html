@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GraphQL Captcha Test Client</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+
+    <div class="bg-white p-6 rounded-2xl shadow-lg w-full max-w-md border border-gray-200">
+        <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Captcha Verification Test</h2>
+
+        <div class="mb-6">
+            <button id="fetch-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-lg transition duration-200 cursor-pointer mb-4">
+                🔄 Generate New Captcha
+            </button>
+            
+            <div id="captcha-container" class="hidden bg-gray-50 border border-gray-300 rounded-lg p-4 flex flex-col items-center justify-center min-h-[100px]">
+                <p class="text-xs text-gray-400 mb-2 font-mono" id="captcha-meta"></p>
+                <div id="captcha-image-wrapper" class="bg-white p-2 rounded border border-gray-200 shadow-sm max-w-full"></div>
+            </div>
+        </div>
+
+        <form id="verify-form" class="space-y-4 hidden">
+            <div>
+                <label for="captcha-input" class="block text-sm font-medium text-gray-700 mb-1">Enter Captcha Code</label>
+                <input type="text" id="captcha-input" required placeholder="Ex: ABC123" 
+                       class="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase tracking-widest font-bold text-center">
+            </div>
+
+            <button type="submit" id="verify-btn" class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2.5 px-4 rounded-lg transition duration-200 cursor-pointer">
+                ✅ Verify Captcha
+            </button>
+        </form>
+
+        <div id="status-box" class="mt-6 p-4 rounded-lg hidden text-sm font-medium"></div>
+
+        <div class="mt-4">
+            <button id="toggle-logs" class="text-xs text-blue-500 hover:underline cursor-pointer">Show Technical Logs</button>
+            <pre id="logs" class="hidden mt-2 p-3 bg-gray-900 text-green-400 text-xs rounded-lg overflow-x-auto max-h-48 font-mono"></pre>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'https://capssv2.vercel.app/api/graphql';
+        
+        // State management
+        let currentCaptchaTokens = {
+            token: '',
+            csrfToken: ''
+        };
+
+        // DOM Elements
+        const fetchBtn = document.getElementById('fetch-btn');
+        const captchaContainer = document.getElementById('captcha-container');
+        const captchaImageWrapper = document.getElementById('captcha-image-wrapper');
+        const captchaMeta = document.getElementById('captcha-meta');
+        const verifyForm = document.getElementById('verify-form');
+        const captchaInput = document.getElementById('captcha-input');
+        const statusBox = document.getElementById('status-box');
+        const logsPre = document.getElementById('logs');
+        const toggleLogsBtn = document.getElementById('toggle-logs');
+
+        // Helper to print logs
+        function logData(title, data) {
+            console.log(title, data);
+            logsPre.textContent = `// ${title}\n` + JSON.stringify(data, null, 2) + `\n\n` + logsPre.textContent;
+        }
+
+        // Toggle Logs visibility
+        toggleLogsBtn.addEventListener('click', () => {
+            logsPre.classList.toggle('hidden');
+            toggleLogsBtn.textContent = logsPre.classList.contains('hidden') ? 'Show Technical Logs' : 'Hide Technical Logs';
+        });
+
+        // 1. Fetch Captcha Query
+        async function fetchCaptcha() {
+            statusBox.classList.add('hidden');
+            fetchBtn.disabled = true;
+            fetchBtn.textContent = 'Generating...';
+
+            const query = `
+                query {
+                    generateCaptcha {
+                        token
+                        encryptedToken
+                        image
+                        csrfToken
+                        sessionId
+                        expiresIn
+                        algorithm
+                    }
+                }
+            `;
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query })
+                });
+
+                const result = await response.json();
+                logData("Fetch Response", result);
+
+                if (result.errors) {
+                    throw new Error(result.errors[0].message);
+                }
+
+                const captcha = result.data.generateCaptcha;
+                
+                // Store tokens for verification step
+                currentCaptchaTokens.token = captcha.token;
+                currentCaptchaTokens.csrfToken = captcha.csrfToken;
+
+                // Render Image (Base64 SVG or Standard Base64 Image)
+                captchaImageWrapper.innerHTML = captcha.image.startsWith('<svg') 
+                    ? captcha.image  // If raw SVG string
+                    : `<img src="${captcha.image}" alt="Captcha Code" class="h-16" />`; // If Base64 string
+
+                captchaMeta.textContent = `Algo: ${captcha.algorithm} | Expires: ${captcha.expiresIn}s`;
+                
+                // Show elements
+                captchaContainer.classList.remove('hidden');
+                verifyForm.classList.remove('hidden');
+                captchaInput.value = '';
+                captchaInput.focus();
+
+            } catch (error) {
+                logData("Fetch Error", error.message);
+                statusBox.className = "mt-6 p-4 rounded-lg text-sm font-medium bg-red-100 text-red-800";
+                statusBox.textContent = "Error loading captcha: " + error.message;
+                statusBox.classList.remove('hidden');
+            } finally {
+                fetchBtn.disabled = false;
+                fetchBtn.textContent = '🔄 Generate New Captcha';
+            }
+        }
+
+        // 2. Verify Captcha Mutation
+        async function verifyCaptcha(e) {
+            e.preventDefault();
+            const userInput = captchaInput.value.trim();
+            
+            if (!userInput) return;
+
+            statusBox.classList.add('hidden');
+            const verifyBtn = document.getElementById('verify-btn');
+            verifyBtn.disabled = true;
+            verifyBtn.textContent = 'Verifying...';
+
+            const mutation = `
+                mutation VerifyCaptcha($token: String!, $input: String!, $csrfToken: String!) {
+                    verifyCaptcha(token: $token, input: $input, csrfToken: $csrfToken) {
+                        success
+                        message
+                        verifiedAt
+                    }
+                }
+            `;
+
+            const variables = {
+                token: currentCaptchaTokens.token,
+                input: userInput,
+                csrfToken: currentCaptchaTokens.csrfToken
+            };
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query: mutation, variables })
+                });
+
+                const result = await response.json();
+                logData("Verify Response", result);
+
+                if (result.errors) {
+                    throw new Error(result.errors[0].message);
+                }
+
+                const verification = result.data.verifyCaptcha;
+
+                if (verification.success) {
+                    statusBox.className = "mt-6 p-4 rounded-lg text-sm font-medium bg-green-100 text-green-800 border border-green-300";
+                    statusBox.innerHTML = `<strong>🎉 Success!</strong> ${verification.message}`;
+                } else {
+                    statusBox.className = "mt-6 p-4 rounded-lg text-sm font-medium bg-red-100 text-red-800 border border-red-300";
+                    statusBox.innerHTML = `<strong>❌ Failed:</strong> ${verification.message || 'Wrong Code!'}`;
+                }
+                statusBox.classList.remove('hidden');
+
+            } catch (error) {
+                logData("Verify Error", error.message);
+                statusBox.className = "mt-6 p-4 rounded-lg text-sm font-medium bg-red-100 text-red-800";
+                statusBox.textContent = "Verification Error: " + error.message;
+                statusBox.classList.remove('hidden');
+            } finally {
+                verifyBtn.disabled = false;
+                verifyBtn.textContent = '✅ Verify Captcha';
+            }
+        }
+
+        // Event Listeners
+        fetchBtn.addEventListener('click', fetchCaptcha);
+        verifyForm.addEventListener('submit', verifyCaptcha);
+    </script>
+</body>
+</html>
