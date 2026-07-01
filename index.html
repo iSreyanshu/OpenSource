@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preload" href="https://6xuv79s.vercel.app/browser/microphone" as="script" crossorigin="anonymous">
+  <title>micx Demo</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #050816;
+      --panel: rgba(10, 18, 39, 0.8);
+      --border: rgba(255, 255, 255, 0.14);
+      --text: #f5f7ff;
+      --muted: #91a1c3;
+      --accent: #7c9cff;
+      --accent-2: #31d4b0;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, "Segoe UI", system-ui, sans-serif;
+      line-height: 1.6;
+      color: var(--text);
+      background: radial-gradient(circle at top, #18254f 0%, var(--bg) 70%);
+      padding: 24px;
+    }
+
+    .shell {
+      max-width: 1040px;
+      margin: 0 auto;
+      padding: 24px;
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      background: var(--panel);
+      box-shadow: 0 20px 70px rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(20px);
+    }
+
+    h1 { margin: 0 0 10px; font-size: clamp(1.7rem, 3vw, 2.5rem); }
+    p { color: var(--muted); }
+
+    .actions { display: flex; gap: 12px; flex-wrap: wrap; margin: 18px 0 16px; }
+    button {
+      border: 0;
+      border-radius: 999px;
+      padding: 10px 16px;
+      font-weight: 700;
+      cursor: pointer;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: white;
+      box-shadow: 0 10px 25px rgba(49, 212, 176, 0.2);
+    }
+    button[disabled] {
+      opacity: 0.55;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .status {
+      margin-bottom: 12px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    pre {
+      margin: 0;
+      background: #03060f;
+      color: #f8f8f2;
+      padding: 16px;
+      border-radius: 16px;
+      max-height: 520px;
+      overflow: auto;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .links { display: flex; gap: 12px; margin-top: 12px; flex-wrap: wrap; }
+    .links a {
+      color: #9ec1ff;
+      text-decoration: none;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <h1>micx Demo</h1>
+    <p>This page demonstrates the browser <code>MicrophoneAPI</code> and shows live audio metrics from your microphone in real time.</p>
+    <div class="status" id="status">Ready. Click <strong>Start</strong> to allow microphone access.</div>
+    <div class="actions">
+      <button id="startButton">Start</button>
+      <button id="stopButton" disabled>Stop</button>
+    </div>
+    <div class="links">
+      <a href="/docs">Open API docs</a>
+      <a href="/guide">Open guide</a>
+    </div>
+    <pre id="output">Waiting for microphone data...</pre>
+  </div>
+
+  <script type="module">
+    import MicrophoneAPI from 'https://6xuv79s.vercel.app/browser/microphone';
+
+    const status = document.getElementById('status');
+    const output = document.getElementById('output');
+    const startButton = document.getElementById('startButton');
+    const stopButton = document.getElementById('stopButton');
+
+    let microphoneApi = null;
+    let realtimeActive = false;
+
+    function setStatus(message) {
+      status.textContent = message;
+    }
+
+    function renderData(data) {
+      output.textContent = JSON.stringify(data, null, 2);
+    }
+
+    function describeError(error) {
+      const message = error?.message || String(error);
+      const name = error?.name || 'Error';
+
+      if (name === 'NotAllowedError') {
+        return 'Microphone permission was denied. Please allow browser access and try again.';
+      }
+
+      if (name === 'NotFoundError' || message.includes('Requested device not found') || message.includes('No microphone')) {
+        return 'No usable microphone was found. Connect a microphone or choose a different input device, then try again. If you are using a remote session, the browser may not reach the host microphone.';
+      }
+
+      if (name === 'NotReadableError') {
+        return 'The microphone is busy or already in use by another app. Close that app and try again.';
+      }
+
+      if (name === 'OverconstrainedError') {
+        return 'The selected audio settings are not supported by this browser. Retrying with a simpler configuration.';
+      }
+
+      if (name === 'SecurityError') {
+        return 'Open this page via localhost or HTTPS and allow microphone permission.';
+      }
+
+      return `Microphone initialization failed: ${message}`;
+    }
+
+    async function getAudioStream() {
+      if (!navigator.mediaDevices?.getUserMedia) {
+        throw new Error('This browser does not support microphone access.');
+      }
+
+      if (!window.isSecureContext && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+        throw new Error('Open this page via localhost or HTTPS so the browser can request microphone access.');
+      }
+
+      const candidates = [
+        { audio: true },
+        { audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } },
+        { audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } }
+      ];
+
+      let lastError = null;
+      for (const constraints of candidates) {
+        try {
+          return await navigator.mediaDevices.getUserMedia(constraints);
+        } catch (error) {
+          lastError = error;
+          if (error?.name === 'NotAllowedError' || error?.name === 'NotReadableError') {
+            throw error;
+          }
+        }
+      }
+
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const audioInputs = devices.filter((device) => device.kind === 'audioinput');
+        if (!audioInputs.length) {
+          throw new Error('No microphone device detected. Please connect a microphone and refresh the page.');
+        }
+      } catch (enumerateError) {
+        if (enumerateError?.message) {
+          lastError = enumerateError;
+        }
+      }
+
+      throw lastError || new Error('Unable to access microphone.');
+    }
+
+    async function startDemo() {
+      try {
+        setStatus('Checking microphone availability...');
+        const stream = await getAudioStream();
+        const track = stream.getAudioTracks()[0];
+        const label = track?.label || 'Default microphone';
+
+        microphoneApi = new MicrophoneAPI(stream);
+        setStatus(`Using ${label}. Calibrating ambient noise...`);
+        const profile = await microphoneApi.calibrate(3);
+        renderData({ calibrationProfile: profile, deviceLabel: label });
+        setStatus('Calibration complete. Streaming live analysis...');
+
+        realtimeActive = true;
+        stopButton.disabled = false;
+        startButton.disabled = true;
+
+        await microphoneApi.startRealtime((frame) => {
+          if (!realtimeActive) return;
+          renderData(frame);
+        });
+      } catch (error) {
+        setStatus(describeError(error));
+        output.textContent = `${error?.name || 'Error'}: ${error?.message || String(error)}`;
+      }
+    }
+
+    function stopDemo() {
+      realtimeActive = false;
+      microphoneApi?.stopRealtime();
+      microphoneApi?.stream?.getTracks().forEach((track) => track.stop());
+      setStatus('Stopped. You can start again anytime.');
+      stopButton.disabled = true;
+      startButton.disabled = false;
+    }
+
+    startButton.addEventListener('click', startDemo);
+    stopButton.addEventListener('click', stopDemo);
+  </script>
+</body>
+</html>
