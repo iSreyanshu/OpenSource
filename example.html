@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TGAuth Integration Example</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 32px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+
+        .config-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        .config-section h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #555;
+            font-size: 14px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 14px 32px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .user-profile {
+            display: none;
+            text-align: center;
+        }
+
+        .user-profile.show {
+            display: block;
+        }
+
+        .user-profile img {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            margin-bottom: 20px;
+            border: 4px solid #667eea;
+        }
+
+        .user-profile h2 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .user-info {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        .user-info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .user-info-item:last-child {
+            border-bottom: none;
+        }
+
+        .user-info-item strong {
+            color: #555;
+        }
+
+        .user-info-item span {
+            color: #333;
+            font-weight: 600;
+        }
+
+        .btn-logout {
+            background: #dc3545;
+            margin-top: 20px;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .error.show {
+            display: block;
+        }
+
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .success.show {
+            display: block;
+        }
+
+        .note {
+            background: #fff3cd;
+            color: #856404;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 TGAuth Demo</h1>
+        <p class="subtitle">Telegram Authentication Integration</p>
+
+        <div id="errorMessage" class="error"></div>
+        <div id="successMessage" class="success"></div>
+
+        <!-- Configuration Section -->
+        <div id="configSection" class="config-section">
+            <h3>⚙️ Configuration</h3>
+            <div class="input-group">
+                <label for="apiUrl">API URL</label>
+                <input type="text" id="apiUrl" placeholder="https://your-app.vercel.app" value="https://your-app.vercel.app">
+            </div>
+            <div class="input-group">
+                <label for="apiKey">API Key</label>
+                <input type="text" id="apiKey" placeholder="tgauth_your_api_key_here">
+            </div>
+            <button class="btn" onclick="saveConfig()">💾 Save Configuration</button>
+            <div class="note">
+                <strong>Note:</strong> Get your API credentials from the TGAuth dashboard.
+            </div>
+        </div>
+
+        <!-- Login Section -->
+        <div id="loginSection" style="display: none;">
+            <button class="btn" onclick="login()">
+                <span>🔐 Login with Telegram</span>
+            </button>
+        </div>
+
+        <!-- Loading Section -->
+        <div id="loadingSection" class="loading">
+            <div class="spinner"></div>
+            <p>Waiting for Telegram authentication...</p>
+            <p style="font-size: 14px; color: #666; margin-top: 10px;">
+                Please complete the authentication in Telegram
+            </p>
+        </div>
+
+        <!-- User Profile Section -->
+        <div id="userProfile" class="user-profile">
+            <img id="userPhoto" src="" alt="Profile Photo">
+            <h2 id="userName"></h2>
+            <div class="user-info">
+                <div class="user-info-item">
+                    <strong>User ID:</strong>
+                    <span id="userId"></span>
+                </div>
+                <div class="user-info-item">
+                    <strong>Username:</strong>
+                    <span id="userUsername"></span>
+                </div>
+                <div class="user-info-item">
+                    <strong>Language:</strong>
+                    <span id="userLanguage"></span>
+                </div>
+                <div class="user-info-item">
+                    <strong>Country:</strong>
+                    <span id="userCountry"></span>
+                </div>
+                <div class="user-info-item">
+                    <strong>Device:</strong>
+                    <span id="userDevice"></span>
+                </div>
+                <div class="user-info-item">
+                    <strong>Browser:</strong>
+                    <span id="userBrowser"></span>
+                </div>
+            </div>
+            <button class="btn btn-logout" onclick="logout()">🚪 Logout</button>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        let API_URL = '';
+        let API_KEY = '';
+        let pollInterval = null;
+
+        // Load saved config from localStorage
+        function loadConfig() {
+            const savedUrl = localStorage.getItem('tgauth_api_url');
+            const savedKey = localStorage.getItem('tgauth_api_key');
+            
+            if (savedUrl) {
+                document.getElementById('apiUrl').value = savedUrl;
+                API_URL = savedUrl;
+            }
+            
+            if (savedKey) {
+                document.getElementById('apiKey').value = savedKey;
+                API_KEY = savedKey;
+            }
+
+            if (API_URL && API_KEY) {
+                document.getElementById('configSection').style.display = 'none';
+                document.getElementById('loginSection').style.display = 'block';
+                checkAuthStatus();
+            }
+        }
+
+        // Save configuration
+        function saveConfig() {
+            const url = document.getElementById('apiUrl').value.trim();
+            const key = document.getElementById('apiKey').value.trim();
+
+            if (!url || !key) {
+                showError('Please fill in both API URL and API Key');
+                return;
+            }
+
+            API_URL = url;
+            API_KEY = key;
+
+            localStorage.setItem('tgauth_api_url', url);
+            localStorage.setItem('tgauth_api_key', key);
+
+            showSuccess('Configuration saved successfully!');
+            
+            setTimeout(() => {
+                document.getElementById('configSection').style.display = 'none';
+                document.getElementById('loginSection').style.display = 'block';
+                checkAuthStatus();
+            }, 1000);
+        }
+
+        // Check if user is already authenticated
+        async function checkAuthStatus() {
+            try {
+                const response = await fetch(`${API_URL}/auth/status`, {
+                    headers: { 'X-API-Key': API_KEY },
+                    credentials: 'include'
+                });
+
+                const data = await response.json();
+
+                if (data.status === 'authenticated') {
+                    showUserProfile(data.user_data);
+                }
+            } catch (error) {
+                console.error('Auth check failed:', error);
+            }
+        }
+
+        // Login function
+        async function login() {
+            try {
+                hideError();
+                hideSuccess();
+
+                const response = await fetch(`${API_URL}/auth/login`, {
+                    headers: { 'X-API-Key': API_KEY }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to initiate login');
+                }
+
+                const data = await response.json();
+
+                // Hide login button, show loading
+                document.getElementById('loginSection').style.display = 'none';
+                document.getElementById('loadingSection').classList.add('show');
+
+                // Open Telegram
+                window.location.href = data.telegram_url;
+
+                // Start polling for status
+                pollAuthStatus(data.session_hash);
+            } catch (error) {
+                showError('Login failed: ' + error.message);
+                document.getElementById('loginSection').style.display = 'block';
+                document.getElementById('loadingSection').classList.remove('show');
+            }
+        }
+
+        // Poll authentication status
+        function pollAuthStatus(hash) {
+            let attempts = 0;
+            const maxAttempts = 150; // 5 minutes (150 * 2 seconds)
+
+            pollInterval = setInterval(async () => {
+                attempts++;
+
+                if (attempts > maxAttempts) {
+                    clearInterval(pollInterval);
+                    showError('Authentication timeout. Please try again.');
+                    document.getElementById('loadingSection').classList.remove('show');
+                    document.getElementById('loginSection').style.display = 'block';
+                    return;
+                }
+
+                try {
+                    const response = await fetch(
+                        `${API_URL}/auth/check?hash=${hash}`,
+                        { headers: { 'X-API-Key': API_KEY } }
+                    );
+
+                    const data = await response.json();
+
+                    if (data.status === 'success') {
+                        clearInterval(pollInterval);
+                        document.getElementById('loadingSection').classList.remove('show');
+                        showUserProfile(data.user_data);
+                        showSuccess('Authentication successful!');
+                    }
+                } catch (error) {
+                    console.error('Poll error:', error);
+                }
+            }, 2000);
+        }
+
+        // Show user profile
+        function showUserProfile(userData) {
+            document.getElementById('userPhoto').src = userData.profile_photo;
+            document.getElementById('userName').textContent = userData.first_name;
+            document.getElementById('userId').textContent = userData.id;
+            document.getElementById('userUsername').textContent = userData.username;
+            document.getElementById('userLanguage').textContent = userData.language_code;
+            document.getElementById('userCountry').textContent = userData.country;
+            document.getElementById('userDevice').textContent = userData.device.device_type;
+            document.getElementById('userBrowser').textContent = userData.device.browser;
+
+            document.getElementById('loginSection').style.display = 'none';
+            document.getElementById('loadingSection').classList.remove('show');
+            document.getElementById('userProfile').classList.add('show');
+        }
+
+        // Logout function
+        async function logout() {
+            try {
+                await fetch(`${API_URL}/auth/logout`, {
+                    method: 'POST',
+                    headers: { 'X-API-Key': API_KEY },
+                    credentials: 'include'
+                });
+
+                document.getElementById('userProfile').classList.remove('show');
+                document.getElementById('loginSection').style.display = 'block';
+                showSuccess('Logged out successfully!');
+            } catch (error) {
+                showError('Logout failed: ' + error.message);
+            }
+        }
+
+        // Show error message
+        function showError(message) {
+            const errorEl = document.getElementById('errorMessage');
+            errorEl.textContent = message;
+            errorEl.classList.add('show');
+            setTimeout(() => errorEl.classList.remove('show'), 5000);
+        }
+
+        // Hide error message
+        function hideError() {
+            document.getElementById('errorMessage').classList.remove('show');
+        }
+
+        // Show success message
+        function showSuccess(message) {
+            const successEl = document.getElementById('successMessage');
+            successEl.textContent = message;
+            successEl.classList.add('show');
+            setTimeout(() => successEl.classList.remove('show'), 3000);
+        }
+
+        // Hide success message
+        function hideSuccess() {
+            document.getElementById('successMessage').classList.remove('show');
+        }
+
+        // Initialize on page load
+        window.addEventListener('DOMContentLoaded', loadConfig);
+
+        // Clean up on page unload
+        window.addEventListener('beforeunload', () => {
+            if (pollInterval) {
+                clearInterval(pollInterval);
+            }
+        });
+    </script>
+</body>
+</html>
