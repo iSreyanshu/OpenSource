@@ -3,232 +3,2224 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="modulepreload" href="https://anycors.vercel.app/v2/cors?u=https://6xuv79s.vercel.app/browser/microphone">
-  <link rel="preload" href="https://anycors.vercel.app/v2/cors?u=https://curshed.vercel.app/browser/microphone" as="script" crossorigin="anonymous">
-  <title>micx Demo</title>
+
+  <link
+    rel="modulepreload"
+    href="https://anycors.vercel.app/v2/cors?u=https://curshed.vercel.app/browser/microphone"
+  />
+  <link
+    rel="preload"
+    href="https://anycors.vercel.app/v2/cors?u=https://curshed.vercel.app/browser/microphone"
+    as="script"
+    crossorigin="anonymous"
+  />
+
+  <title>MICX // Paranormal Audio Monitor</title>
+
   <style>
     :root {
       color-scheme: dark;
-      --bg: #050816;
-      --panel: rgba(10, 18, 39, 0.8);
-      --border: rgba(255, 255, 255, 0.14);
-      --text: #f5f7ff;
-      --muted: #91a1c3;
-      --accent: #7c9cff;
-      --accent-2: #31d4b0;
+
+      --bg: #020308;
+      --bg-2: #070b14;
+      --panel: rgba(10, 15, 28, 0.72);
+      --panel-strong: rgba(12, 18, 34, 0.92);
+
+      --border: rgba(255, 255, 255, 0.09);
+      --border-bright: rgba(111, 236, 255, 0.28);
+
+      --text: #f5fbff;
+      --muted: #7f91a9;
+
+      --cyan: #42e8ff;
+      --cyan-2: #167dff;
+      --purple: #9b5cff;
+      --green: #42f5a7;
+      --yellow: #ffd166;
+      --red: #ff477e;
+
+      --shadow:
+        0 25px 100px rgba(0, 0, 0, 0.55),
+        inset 0 1px 0 rgba(255, 255, 255, 0.035);
     }
 
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
     body {
       margin: 0;
       min-height: 100vh;
-      font-family: Inter, "Segoe UI", system-ui, sans-serif;
-      line-height: 1.6;
+      overflow-x: hidden;
+
+      font-family:
+        Inter,
+        ui-sans-serif,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+
       color: var(--text);
-      background: radial-gradient(circle at top, #18254f 0%, var(--bg) 70%);
-      padding: 24px;
+
+      background:
+        radial-gradient(
+          circle at 50% -10%,
+          rgba(42, 107, 255, 0.25),
+          transparent 34%
+        ),
+        radial-gradient(
+          circle at 10% 50%,
+          rgba(127, 53, 255, 0.12),
+          transparent 30%
+        ),
+        radial-gradient(
+          circle at 90% 80%,
+          rgba(0, 225, 255, 0.08),
+          transparent 28%
+        ),
+        linear-gradient(180deg, #03050a 0%, #020308 100%);
+
+      padding: 18px;
     }
 
-    .shell {
-      max-width: 1040px;
-      margin: 0 auto;
-      padding: 24px;
-      border: 1px solid var(--border);
-      border-radius: 24px;
-      background: var(--panel);
-      box-shadow: 0 20px 70px rgba(0, 0, 0, 0.35);
-      backdrop-filter: blur(20px);
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 999;
+
+      opacity: 0.045;
+
+      background-image:
+        linear-gradient(rgba(255,255,255,.3) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.3) 1px, transparent 1px);
+
+      background-size: 60px 60px;
+
+      mask-image: linear-gradient(
+        to bottom,
+        black,
+        transparent 85%
+      );
     }
 
-    h1 { margin: 0 0 10px; font-size: clamp(1.7rem, 3vw, 2.5rem); }
-    p { color: var(--muted); }
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
 
-    .actions { display: flex; gap: 12px; flex-wrap: wrap; margin: 18px 0 16px; }
+      background:
+        radial-gradient(
+          circle at center,
+          transparent 45%,
+          rgba(0, 0, 0, 0.48) 100%
+        );
+
+      z-index: 998;
+    }
+
     button {
-      border: 0;
+      font: inherit;
+    }
+
+    .app {
+      width: min(1450px, 100%);
+      margin: auto;
+      position: relative;
+      z-index: 2;
+    }
+
+    /* ================= HEADER ================= */
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+
+      padding: 16px 18px;
+      margin-bottom: 16px;
+
+      border: 1px solid var(--border);
+      border-radius: 22px;
+
+      background: rgba(5, 9, 18, 0.7);
+      backdrop-filter: blur(22px);
+
+      box-shadow: var(--shadow);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 13px;
+    }
+
+    .brand-orb {
+      width: 44px;
+      height: 44px;
+      flex: 0 0 44px;
+
+      border-radius: 50%;
+
+      background:
+        radial-gradient(
+          circle at 35% 30%,
+          #ffffff 0%,
+          #5ff1ff 10%,
+          #198aff 35%,
+          #5c2bff 70%,
+          transparent 72%
+        );
+
+      box-shadow:
+        0 0 15px rgba(66, 232, 255, .7),
+        0 0 45px rgba(91, 82, 255, .3);
+
+      animation: orbPulse 3s ease-in-out infinite;
+    }
+
+    .brand-text strong {
+      display: block;
+      letter-spacing: .18em;
+      font-size: 14px;
+    }
+
+    .brand-text span {
+      display: block;
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: 10px;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+    }
+
+    .system-status {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+
+      padding: 9px 13px;
       border-radius: 999px;
-      padding: 10px 16px;
+
+      background: rgba(66, 245, 167, .055);
+      border: 1px solid rgba(66, 245, 167, .13);
+
+      color: #baffdc;
+      font-size: 11px;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 14px var(--green);
+      animation: blink 1.5s infinite;
+    }
+
+    /* ================= HERO ================= */
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+
+      min-height: 390px;
+
+      display: grid;
+      grid-template-columns: 1.05fr .95fr;
+      align-items: center;
+      gap: 30px;
+
+      padding: clamp(26px, 5vw, 65px);
+
+      border: 1px solid var(--border);
+      border-radius: 30px;
+
+      background:
+        linear-gradient(
+          135deg,
+          rgba(13, 22, 44, .84),
+          rgba(5, 8, 17, .78)
+        );
+
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(30px);
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      width: 500px;
+      height: 500px;
+      right: -200px;
+      top: -230px;
+
+      border-radius: 50%;
+
+      background: rgba(67, 100, 255, .14);
+      filter: blur(70px);
+    }
+
+    .hero-copy {
+      position: relative;
+      z-index: 2;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+
+      padding: 7px 11px;
+      margin-bottom: 16px;
+
+      border: 1px solid rgba(66, 232, 255, .16);
+      border-radius: 999px;
+
+      color: #8defff;
+      background: rgba(66, 232, 255, .045);
+
+      font-size: 10px;
       font-weight: 700;
-      cursor: pointer;
-      background: linear-gradient(135deg, var(--accent), var(--accent-2));
-      color: white;
-      box-shadow: 0 10px 25px rgba(49, 212, 176, 0.2);
-    }
-    button[disabled] {
-      opacity: 0.55;
-      cursor: not-allowed;
-      box-shadow: none;
+      letter-spacing: .16em;
+      text-transform: uppercase;
     }
 
-    .status {
-      margin-bottom: 12px;
-      padding: 12px 14px;
-      border-radius: 14px;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+    .eyebrow i {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--cyan);
+      box-shadow: 0 0 10px var(--cyan);
     }
 
-    pre {
+    h1 {
       margin: 0;
-      background: #03060f;
-      color: #f8f8f2;
-      padding: 16px;
-      border-radius: 16px;
-      max-height: 520px;
-      overflow: auto;
-      border: 1px solid rgba(255, 255, 255, 0.08);
+
+      max-width: 700px;
+
+      font-size: clamp(2.3rem, 6vw, 5.4rem);
+      line-height: .92;
+      letter-spacing: -.065em;
     }
 
-    .links { display: flex; gap: 12px; margin-top: 12px; flex-wrap: wrap; }
-    .links a {
-      color: #9ec1ff;
-      text-decoration: none;
-      font-weight: 600;
+    h1 span {
+      display: block;
+
+      background:
+        linear-gradient(
+          90deg,
+          #fff,
+          #6ceeff 42%,
+          #9d73ff
+        );
+
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .hero-description {
+      max-width: 620px;
+      margin: 20px 0 0;
+
+      color: #8e9db4;
+      font-size: clamp(.9rem, 1.5vw, 1rem);
+      line-height: 1.7;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 11px;
+      margin-top: 25px;
+    }
+
+    .primary-btn,
+    .secondary-btn {
+      border: 0;
+      cursor: pointer;
+      border-radius: 13px;
+      padding: 13px 19px;
+
+      font-weight: 800;
+      font-size: 12px;
+      letter-spacing: .06em;
+
+      transition:
+        transform .2s ease,
+        box-shadow .2s ease,
+        opacity .2s ease;
+    }
+
+    .primary-btn {
+      color: #021018;
+
+      background:
+        linear-gradient(
+          135deg,
+          #b5f9ff,
+          #39e4ff 45%,
+          #638bff
+        );
+
+      box-shadow:
+        0 12px 30px rgba(38, 190, 255, .2),
+        inset 0 1px 1px rgba(255,255,255,.7);
+    }
+
+    .secondary-btn {
+      color: #d9e8ff;
+
+      background: rgba(255,255,255,.045);
+      border: 1px solid rgba(255,255,255,.1);
+    }
+
+    .primary-btn:hover,
+    .secondary-btn:hover {
+      transform: translateY(-2px);
+    }
+
+    .primary-btn:active,
+    .secondary-btn:active {
+      transform: translateY(0) scale(.98);
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: .42;
+      transform: none !important;
+    }
+
+    /* ================= RADAR ================= */
+
+    .radar-wrap {
+      position: relative;
+
+      width: min(100%, 390px);
+      aspect-ratio: 1;
+
+      margin: auto;
+    }
+
+    .radar {
+      position: absolute;
+      inset: 7%;
+
+      border-radius: 50%;
+
+      background:
+        repeating-radial-gradient(
+          circle,
+          transparent 0 28px,
+          rgba(79, 227, 255, .08) 29px 30px
+        ),
+        linear-gradient(
+          transparent 49.7%,
+          rgba(69, 226, 255, .1) 50%,
+          transparent 50.3%
+        ),
+        linear-gradient(
+          90deg,
+          transparent 49.7%,
+          rgba(69, 226, 255, .1) 50%,
+          transparent 50.3%
+        );
+
+      border: 1px solid rgba(73, 218, 255, .18);
+
+      box-shadow:
+        inset 0 0 60px rgba(40, 180, 255, .05),
+        0 0 80px rgba(50, 130, 255, .08);
+    }
+
+    .radar::before {
+      content: "";
+
+      position: absolute;
+      inset: 50%;
+
+      width: 50%;
+      height: 2px;
+
+      transform-origin: left center;
+
+      background:
+        linear-gradient(
+          90deg,
+          rgba(70,235,255,.7),
+          transparent
+        );
+
+      box-shadow: 0 0 14px var(--cyan);
+
+      animation: radarSweep 3.2s linear infinite;
+    }
+
+    .radar::after {
+      content: "";
+
+      position: absolute;
+      left: 50%;
+      top: 50%;
+
+      width: 11px;
+      height: 11px;
+
+      transform: translate(-50%, -50%);
+
+      border-radius: 50%;
+
+      background: white;
+
+      box-shadow:
+        0 0 8px white,
+        0 0 22px var(--cyan),
+        0 0 55px var(--cyan);
+    }
+
+    .radar-point {
+      position: absolute;
+
+      width: 7px;
+      height: 7px;
+
+      border-radius: 50%;
+
+      background: var(--cyan);
+      box-shadow:
+        0 0 8px var(--cyan),
+        0 0 20px var(--cyan);
+
+      animation: pointPulse 2s infinite;
+    }
+
+    .point-a {
+      left: 26%;
+      top: 34%;
+    }
+
+    .point-b {
+      right: 25%;
+      top: 26%;
+      animation-delay: .7s;
+    }
+
+    .point-c {
+      right: 30%;
+      bottom: 25%;
+      animation-delay: 1.2s;
+    }
+
+    .point-d {
+      left: 23%;
+      bottom: 28%;
+      animation-delay: 1.8s;
+    }
+
+    .radar-label {
+      position: absolute;
+      bottom: 7%;
+      left: 50%;
+      transform: translateX(-50%);
+
+      color: #66839e;
+
+      font-size: 9px;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    /* ================= DASHBOARD ================= */
+
+    .dashboard {
+      display: grid;
+      grid-template-columns: 1.25fr .75fr;
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .panel {
+      position: relative;
+      overflow: hidden;
+
+      border: 1px solid var(--border);
+      border-radius: 23px;
+
+      background: var(--panel);
+
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(22px);
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 15px;
+
+      padding: 17px 19px;
+
+      border-bottom: 1px solid rgba(255,255,255,.055);
+    }
+
+    .panel-title {
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+    }
+
+    .panel-subtitle {
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 9px;
+    }
+
+    .live-tag {
+      color: #9bffce;
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: .1em;
+    }
+
+    .live-tag::before {
+      content: "●";
+      margin-right: 5px;
+      color: var(--green);
+      text-shadow: 0 0 10px var(--green);
+    }
+
+    /* ================= METRICS ================= */
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 9px;
+
+      padding: 14px;
+    }
+
+    .metric {
+      min-width: 0;
+      padding: 15px;
+
+      border-radius: 16px;
+
+      background:
+        linear-gradient(
+          145deg,
+          rgba(255,255,255,.045),
+          rgba(255,255,255,.018)
+        );
+
+      border: 1px solid rgba(255,255,255,.055);
+    }
+
+    .metric-label {
+      color: var(--muted);
+
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .metric-value {
+      margin-top: 8px;
+
+      font-size: clamp(1.2rem, 3vw, 1.75rem);
+      font-weight: 800;
+      letter-spacing: -.04em;
+
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .metric-value.cyan {
+      color: var(--cyan);
+      text-shadow: 0 0 18px rgba(66,232,255,.28);
+    }
+
+    /* ================= SIGNAL ================= */
+
+    .signal-area {
+      padding: 18px;
+    }
+
+    .signal-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 15px;
+    }
+
+    .signal-number {
+      font-size: clamp(2.5rem, 7vw, 4.5rem);
+      font-weight: 900;
+      line-height: .9;
+      letter-spacing: -.07em;
+    }
+
+    .signal-unit {
+      margin-left: 5px;
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: .1em;
+    }
+
+    .signal-bars {
+      height: 105px;
+
+      display: flex;
+      align-items: end;
+      gap: 3px;
+
+      margin-top: 22px;
+      overflow: hidden;
+    }
+
+    .bar {
+      flex: 1;
+      min-width: 3px;
+
+      height: 20%;
+
+      border-radius: 4px 4px 1px 1px;
+
+      background:
+        linear-gradient(
+          to top,
+          #1556ff,
+          #4feeff
+        );
+
+      opacity: .75;
+
+      box-shadow: 0 0 8px rgba(66,232,255,.16);
+
+      transition: height .12s ease;
+    }
+
+    .signal-line {
+      position: relative;
+      height: 1px;
+      margin-top: 3px;
+
+      background: rgba(255,255,255,.08);
+    }
+
+    .signal-line::after {
+      content: "";
+
+      position: absolute;
+      left: 0;
+      top: -1px;
+
+      width: 25%;
+      height: 3px;
+
+      border-radius: 10px;
+
+      background: var(--cyan);
+      box-shadow: 0 0 12px var(--cyan);
+    }
+
+    /* ================= ALERT ================= */
+
+    .alert {
+      margin: 0 14px 14px;
+      padding: 14px;
+
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+
+      border-radius: 16px;
+
+      background: rgba(255, 209, 102, .045);
+      border: 1px solid rgba(255, 209, 102, .13);
+    }
+
+    .alert-icon {
+      width: 32px;
+      height: 32px;
+      flex: 0 0 32px;
+
+      display: grid;
+      place-items: center;
+
+      border-radius: 10px;
+
+      color: var(--yellow);
+      background: rgba(255,209,102,.08);
+
+      font-weight: 900;
+    }
+
+    .alert strong {
+      display: block;
+      color: #ffe8a1;
+      font-size: 11px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .alert span {
+      display: block;
+      margin-top: 3px;
+      color: #8995a9;
+      font-size: 10px;
+      line-height: 1.5;
+    }
+
+    /* ================= EVENT LOG ================= */
+
+    .event-list {
+      max-height: 330px;
+      overflow: auto;
+      padding: 8px 14px 14px;
+    }
+
+    .event-list::-webkit-scrollbar {
+      width: 5px;
+    }
+
+    .event-list::-webkit-scrollbar-thumb {
+      background: rgba(255,255,255,.1);
+      border-radius: 99px;
+    }
+
+    .event {
+      display: grid;
+      grid-template-columns: 55px 9px 1fr;
+      gap: 10px;
+      align-items: start;
+
+      padding: 12px 4px;
+
+      border-bottom: 1px solid rgba(255,255,255,.045);
+    }
+
+    .event:last-child {
+      border-bottom: 0;
+    }
+
+    .event-time {
+      color: #54647b;
+      font-size: 9px;
+      font-family: monospace;
+    }
+
+    .event-dot {
+      width: 7px;
+      height: 7px;
+      margin-top: 4px;
+
+      border-radius: 50%;
+      background: var(--cyan);
+      box-shadow: 0 0 9px var(--cyan);
+    }
+
+    .event.warning .event-dot {
+      background: var(--yellow);
+      box-shadow: 0 0 9px var(--yellow);
+    }
+
+    .event.danger .event-dot {
+      background: var(--red);
+      box-shadow: 0 0 9px var(--red);
+    }
+
+    .event-content strong {
+      display: block;
+      font-size: 10px;
+      color: #dce8f8;
+    }
+
+    .event-content span {
+      display: block;
+      margin-top: 2px;
+      color: #596981;
+      font-size: 9px;
+    }
+
+    /* ================= OUTPUT ================= */
+
+    .output-panel {
+      margin-top: 16px;
+    }
+
+    #output {
+      margin: 0;
+
+      min-height: 130px;
+      max-height: 300px;
+
+      padding: 17px;
+
+      overflow: auto;
+
+      color: #a8f5ff;
+
+      background:
+        linear-gradient(
+          180deg,
+          rgba(0,0,0,.3),
+          rgba(0,0,0,.12)
+        );
+
+      font-family:
+        "SFMono-Regular",
+        Consolas,
+        "Liberation Mono",
+        monospace;
+
+      font-size: 10px;
+      line-height: 1.65;
+    }
+
+    /* ================= FOOTER ================= */
+
+    .footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 15px;
+      flex-wrap: wrap;
+
+      margin-top: 14px;
+      padding: 8px 5px;
+
+      color: #47566c;
+
+      font-size: 9px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .footer strong {
+      color: #687b96;
+    }
+
+    /* ================= ACTIVE STATE ================= */
+
+    body.active .brand-orb {
+      animation:
+        orbPulse .8s ease-in-out infinite,
+        orbRotate 4s linear infinite;
+    }
+
+    body.active .hero {
+      border-color: rgba(66,232,255,.18);
+    }
+
+    body.active .radar {
+      box-shadow:
+        inset 0 0 80px rgba(40, 180, 255, .08),
+        0 0 100px rgba(50, 130, 255, .12);
+    }
+
+    body.active .signal-number {
+      color: #dffcff;
+      text-shadow:
+        0 0 25px rgba(66,232,255,.25);
+    }
+
+    /* ================= ANIMATIONS ================= */
+
+    @keyframes orbPulse {
+      0%, 100% {
+        transform: scale(1);
+        filter: brightness(.9);
+      }
+
+      50% {
+        transform: scale(1.08);
+        filter: brightness(1.25);
+      }
+    }
+
+    @keyframes orbRotate {
+      to {
+        filter: hue-rotate(360deg);
+      }
+    }
+
+    @keyframes radarSweep {
+      from {
+        transform: rotate(0deg);
+      }
+
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    @keyframes pointPulse {
+      0%, 100% {
+        transform: scale(.75);
+        opacity: .45;
+      }
+
+      50% {
+        transform: scale(1.8);
+        opacity: 1;
+      }
+    }
+
+    @keyframes blink {
+      0%, 100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: .3;
+      }
+    }
+
+    /* ================= MOBILE ================= */
+
+    @media (max-width: 900px) {
+      body {
+        padding: 10px;
+      }
+
+      .hero {
+        grid-template-columns: 1fr;
+        min-height: auto;
+        padding: 30px 23px;
+      }
+
+      .radar-wrap {
+        width: min(72vw, 330px);
+      }
+
+      .dashboard {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .topbar {
+        padding: 13px;
+        border-radius: 17px;
+      }
+
+      .brand-orb {
+        width: 36px;
+        height: 36px;
+        flex-basis: 36px;
+      }
+
+      .system-status {
+        padding: 7px 9px;
+        font-size: 8px;
+      }
+
+      .hero {
+        border-radius: 22px;
+        padding: 27px 18px;
+      }
+
+      h1 {
+        font-size: clamp(2.5rem, 14vw, 4rem);
+      }
+
+      .hero-description {
+        font-size: 12px;
+      }
+
+      .hero-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .primary-btn,
+      .secondary-btn {
+        width: 100%;
+        padding: 13px 10px;
+        font-size: 10px;
+      }
+
+      .radar-wrap {
+        width: 78vw;
+        max-width: 310px;
+      }
+
+      .panel {
+        border-radius: 19px;
+      }
+
+      .metrics {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .metric:last-child {
+        grid-column: 1 / -1;
+      }
+
+      .signal-number {
+        font-size: 3.4rem;
+      }
+
+      .footer {
+        font-size: 8px;
+      }
+    }
+
+    @media (max-width: 380px) {
+      .system-status span {
+        display: none;
+      }
+
+      .hero-actions {
+        grid-template-columns: 1fr;
+      }
+
+      .metrics {
+        grid-template-columns: 1fr;
+      }
+
+      .metric:last-child {
+        grid-column: auto;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: .001ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+      }
     }
   </style>
 </head>
+
 <body>
-  <div class="shell">
-    <h1>micx Demo</h1>
-    <p>This page demonstrates the browser <code>MicrophoneAPI</code> and shows live audio metrics from your microphone in real time.</p>
-    <div class="status" id="status">Ready. Click <strong>Start</strong> to allow microphone access.</div>
-    <div class="actions">
-      <button id="startButton">Start</button>
-      <button id="stopButton" disabled>Stop</button>
-    </div>
-    <div class="links">
-      <a href="/docs">Open API docs</a>
-      <a href="/guide">Open guide</a>
-    </div>
-    <pre id="output">Waiting for microphone data...</pre>
-  </div>
+
+  <main class="app">
+
+    <!-- TOP BAR -->
+    <header class="topbar">
+
+      <div class="brand">
+        <div class="brand-orb"></div>
+
+        <div class="brand-text">
+          <strong>MICX</strong>
+          <span>Paranormal Audio Intelligence</span>
+        </div>
+      </div>
+
+      <div class="system-status">
+        <i class="status-dot"></i>
+        <span id="systemStatus">System Standby</span>
+      </div>
+
+    </header>
+
+
+    <!-- HERO -->
+    <section class="hero">
+
+      <div class="hero-copy">
+
+        <div class="eyebrow">
+          <i></i>
+          Advanced EVP Detection Interface
+        </div>
+
+        <h1>
+          Listen Beyond
+          <span>The Silence.</span>
+        </h1>
+
+        <p class="hero-description">
+          A real-time microphone analysis interface designed to visualize
+          subtle acoustic activity, ambient noise changes and unusual
+          audio patterns.
+        </p>
+
+        <div class="hero-actions">
+          <button
+            class="primary-btn"
+            id="startButton"
+          >
+            ▶ INITIALIZE SCAN
+          </button>
+
+          <button
+            class="secondary-btn"
+            id="stopButton"
+            disabled
+          >
+            ■ TERMINATE
+          </button>
+        </div>
+
+      </div>
+
+
+      <!-- RADAR -->
+      <div class="radar-wrap">
+
+        <div class="radar">
+
+          <span class="radar-point point-a"></span>
+          <span class="radar-point point-b"></span>
+          <span class="radar-point point-c"></span>
+          <span class="radar-point point-d"></span>
+
+        </div>
+
+        <div class="radar-label">
+          Acoustic Field Monitor
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- DASHBOARD -->
+    <section class="dashboard">
+
+      <!-- LEFT -->
+      <div>
+
+        <div class="panel">
+
+          <div class="panel-header">
+
+            <div>
+              <div class="panel-title">
+                Live Acoustic Intelligence
+              </div>
+
+              <div class="panel-subtitle">
+                Real-time microphone telemetry
+              </div>
+            </div>
+
+            <div
+              class="live-tag"
+              id="liveTag"
+            >
+              STANDBY
+            </div>
+
+          </div>
+
+
+          <div class="metrics">
+
+            <div class="metric">
+              <div class="metric-label">
+                Signal
+              </div>
+
+              <div
+                class="metric-value cyan"
+                id="signalMetric"
+              >
+                0.00
+              </div>
+            </div>
+
+            <div class="metric">
+              <div class="metric-label">
+                Noise Floor
+              </div>
+
+              <div
+                class="metric-value"
+                id="noiseMetric"
+              >
+                0.00
+              </div>
+            </div>
+
+            <div class="metric">
+              <div class="metric-label">
+                Detection
+              </div>
+
+              <div
+                class="metric-value"
+                id="detectionMetric"
+              >
+                IDLE
+              </div>
+            </div>
+
+          </div>
+
+
+          <div class="signal-area">
+
+            <div class="signal-top">
+
+              <div>
+                <div class="signal-number" id="signalNumber">
+                  0
+                </div>
+
+                <span class="signal-unit">
+                  LIVE AMPLITUDE
+                </span>
+              </div>
+
+            </div>
+
+            <div
+              class="signal-bars"
+              id="signalBars"
+            ></div>
+
+            <div class="signal-line"></div>
+
+          </div>
+
+
+          <div class="alert">
+
+            <div class="alert-icon">
+              !
+            </div>
+
+            <div>
+              <strong>Environmental Warning</strong>
+
+              <span id="warningText">
+                No active microphone scan. Environmental audio cannot
+                be interpreted until the scanner is initialized.
+              </span>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <!-- RIGHT -->
+      <div class="panel">
+
+        <div class="panel-header">
+
+          <div>
+            <div class="panel-title">
+              Anomaly Log
+            </div>
+
+            <div class="panel-subtitle">
+              Scanner activity
+            </div>
+          </div>
+
+        </div>
+
+        <div
+          class="event-list"
+          id="eventList"
+        >
+
+          <div class="event">
+
+            <div class="event-time">
+              --:--
+            </div>
+
+            <div class="event-dot"></div>
+
+            <div class="event-content">
+              <strong>System initialized</strong>
+              <span>Awaiting microphone authorization.</span>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- RAW DATA -->
+    <section class="panel output-panel">
+
+      <div class="panel-header">
+
+        <div>
+          <div class="panel-title">
+            Telemetry Stream
+          </div>
+
+          <div class="panel-subtitle">
+            Raw MicrophoneAPI output
+          </div>
+        </div>
+
+        <div
+          class="live-tag"
+          id="telemetryStatus"
+        >
+          OFFLINE
+        </div>
+
+      </div>
+
+      <pre id="output">Waiting for scanner initialization...</pre>
+
+    </section>
+
+
+    <footer class="footer">
+      <span>
+        MICX // <strong>Acoustic Intelligence Core</strong>
+      </span>
+
+      <span>
+        LOCAL PROCESSING • MICROPHONE PERMISSION REQUIRED
+      </span>
+    </footer>
+
+  </main>
+
 
   <script type="module">
-    import MicrophoneAPI from 'https://anycors.vercel.app/v2/cors?u=https://curshed.vercel.app/browser/microphone';
 
-    const status = document.getElementById('status');
-    const output = document.getElementById('output');
-    const startButton = document.getElementById('startButton');
-    const stopButton = document.getElementById('stopButton');
+    import MicrophoneAPI from
+      'https://anycors.vercel.app/v2/cors?u=https://curshed.vercel.app/browser/microphone';
+
+
+    /* =========================================================
+       DOM
+    ========================================================= */
+
+    const status = document.getElementById("systemStatus");
+
+    const output = document.getElementById("output");
+
+    const startButton =
+      document.getElementById("startButton");
+
+    const stopButton =
+      document.getElementById("stopButton");
+
+    const signalMetric =
+      document.getElementById("signalMetric");
+
+    const noiseMetric =
+      document.getElementById("noiseMetric");
+
+    const detectionMetric =
+      document.getElementById("detectionMetric");
+
+    const signalNumber =
+      document.getElementById("signalNumber");
+
+    const warningText =
+      document.getElementById("warningText");
+
+    const eventList =
+      document.getElementById("eventList");
+
+    const liveTag =
+      document.getElementById("liveTag");
+
+    const telemetryStatus =
+      document.getElementById("telemetryStatus");
+
+    const signalBars =
+      document.getElementById("signalBars");
+
+
+    /* =========================================================
+       STATE
+    ========================================================= */
 
     let microphoneApi = null;
+
     let realtimeActive = false;
+
+    let lastDetection = "";
+
+    let eventCount = 0;
+
+
+    /* =========================================================
+       SIGNAL BARS
+    ========================================================= */
+
+    const bars = [];
+
+    for (let i = 0; i < 64; i++) {
+
+      const bar = document.createElement("div");
+
+      bar.className = "bar";
+
+      bar.style.height =
+        `${Math.random() * 25 + 5}%`;
+
+      signalBars.appendChild(bar);
+
+      bars.push(bar);
+    }
+
+
+    function animateBars(value = 0.2) {
+
+      bars.forEach((bar, index) => {
+
+        const wave =
+          Math.sin(Date.now() / 120 + index * .45) * .5 + .5;
+
+        const randomness =
+          Math.random() * .35;
+
+        const height =
+          Math.max(
+            5,
+            Math.min(
+              100,
+              (value * 90) * (.45 + wave * .55) +
+              randomness * 20
+            )
+          );
+
+        bar.style.height = `${height}%`;
+
+      });
+
+    }
+
+
+    /* =========================================================
+       HELPERS
+    ========================================================= */
 
     function setStatus(message) {
       status.textContent = message;
     }
 
-    function renderData(data) {
-      output.textContent = JSON.stringify(data, null, 2);
+
+    function now() {
+
+      return new Date().toLocaleTimeString(
+        [],
+        {
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit"
+        }
+      );
+
     }
+
+
+    function addEvent(
+      title,
+      description,
+      type = ""
+    ) {
+
+      const event = document.createElement("div");
+
+      event.className =
+        `event ${type}`;
+
+      event.innerHTML = `
+
+        <div class="event-time">
+          ${now()}
+        </div>
+
+        <div class="event-dot"></div>
+
+        <div class="event-content">
+          <strong>${title}</strong>
+          <span>${description}</span>
+        </div>
+
+      `;
+
+      eventList.prepend(event);
+
+      eventCount++;
+
+      while (eventList.children.length > 10) {
+        eventList.removeChild(
+          eventList.lastElementChild
+        );
+      }
+
+    }
+
+
+    function renderData(data) {
+
+      output.textContent =
+        JSON.stringify(data, null, 2);
+
+    }
+
+
+    /* =========================================================
+       ERROR SYSTEM
+    ========================================================= */
 
     function describeError(error) {
-      const message = error?.message || String(error);
-      const name = error?.name || 'Error';
 
-      if (name === 'NotAllowedError') {
-        return 'Microphone permission was denied. Please allow browser access and try again.';
+      const message =
+        error?.message || String(error);
+
+      const name =
+        error?.name || "Error";
+
+
+      if (name === "NotAllowedError") {
+
+        return {
+          title: "Microphone Access Denied",
+          message:
+            "Permission was denied. Allow microphone access in your browser settings and initialize the scanner again.",
+          type: "danger"
+        };
+
       }
 
-      if (name === 'NotFoundError' || message.includes('Requested device not found') || message.includes('No microphone')) {
-        return 'No usable microphone was found. Connect a microphone or choose a different input device, then try again. If you are using a remote session, the browser may not reach the host microphone.';
+
+      if (
+        name === "NotFoundError" ||
+        message.includes("Requested device not found") ||
+        message.includes("No microphone")
+      ) {
+
+        return {
+          title: "No Microphone Detected",
+          message:
+            "No usable audio input device was found.",
+          type: "warning"
+        };
+
       }
 
-      if (name === 'NotReadableError') {
-        return 'The microphone is busy or already in use by another app. Close that app and try again.';
+
+      if (name === "NotReadableError") {
+
+        return {
+          title: "Microphone Busy",
+          message:
+            "Another application may already be using the microphone.",
+          type: "warning"
+        };
+
       }
 
-      if (name === 'OverconstrainedError') {
-        return 'The selected audio settings are not supported by this browser. Retrying with a simpler configuration.';
+
+      if (name === "OverconstrainedError") {
+
+        return {
+          title: "Unsupported Audio Configuration",
+          message:
+            "The browser rejected the requested audio settings.",
+          type: "warning"
+        };
+
       }
 
-      if (name === 'SecurityError') {
-        return 'Open this page via localhost or HTTPS and allow microphone permission.';
+
+      if (name === "SecurityError") {
+
+        return {
+          title: "Secure Context Required",
+          message:
+            "Use HTTPS or localhost to access the microphone.",
+          type: "danger"
+        };
+
       }
 
-      return `Microphone initialization failed: ${message}`;
+
+      return {
+        title: "Scanner Initialization Failed",
+        message,
+        type: "danger"
+      };
+
     }
 
+
+    /* =========================================================
+       MICROPHONE
+    ========================================================= */
+
     async function getAudioStream() {
+
       if (!navigator.mediaDevices?.getUserMedia) {
-        throw new Error('This browser does not support microphone access.');
+
+        throw new Error(
+          "This browser does not support microphone access."
+        );
+
       }
 
-      if (!window.isSecureContext && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
-        throw new Error('Open this page via localhost or HTTPS so the browser can request microphone access.');
+
+      if (
+        !window.isSecureContext &&
+        location.hostname !== "localhost" &&
+        location.hostname !== "127.0.0.1"
+      ) {
+
+        throw new Error(
+          "Open this page via localhost or HTTPS so the browser can request microphone access."
+        );
+
       }
+
 
       const candidates = [
-        { audio: true },
-        { audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } },
-        { audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } }
-      ];
 
-      let lastError = null;
-      for (const constraints of candidates) {
-        try {
-          return await navigator.mediaDevices.getUserMedia(constraints);
-        } catch (error) {
-          lastError = error;
-          if (error?.name === 'NotAllowedError' || error?.name === 'NotReadableError') {
-            throw error;
+        { audio: true },
+
+        {
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true
+          }
+        },
+
+        {
+          audio: {
+            echoCancellation: false,
+            noiseSuppression: false,
+            autoGainControl: false
           }
         }
+
+      ];
+
+
+      let lastError = null;
+
+
+      for (const constraints of candidates) {
+
+        try {
+
+          return await navigator.mediaDevices
+            .getUserMedia(constraints);
+
+        } catch (error) {
+
+          lastError = error;
+
+          if (
+            error?.name === "NotAllowedError" ||
+            error?.name === "NotReadableError"
+          ) {
+            throw error;
+          }
+
+        }
+
       }
 
+
       try {
-        const devices = await navigator.mediaDevices.enumerateDevices();
-        const audioInputs = devices.filter((device) => device.kind === 'audioinput');
+
+        const devices =
+          await navigator.mediaDevices.enumerateDevices();
+
+        const audioInputs =
+          devices.filter(
+            device => device.kind === "audioinput"
+          );
+
+
         if (!audioInputs.length) {
-          throw new Error('No microphone device detected. Please connect a microphone and refresh the page.');
+
+          throw new Error(
+            "No microphone device detected. Please connect a microphone and refresh the page."
+          );
+
         }
+
       } catch (enumerateError) {
+
         if (enumerateError?.message) {
           lastError = enumerateError;
         }
+
       }
 
-      throw lastError || new Error('Unable to access microphone.');
+
+      throw (
+        lastError ||
+        new Error("Unable to access microphone.")
+      );
+
     }
+
+
+    /* =========================================================
+       START
+    ========================================================= */
 
     async function startDemo() {
+
       try {
-        setStatus('Checking microphone availability...');
-        const stream = await getAudioStream();
-        const track = stream.getAudioTracks()[0];
-        const label = track?.label || 'Default microphone';
 
-        microphoneApi = new MicrophoneAPI(stream);
-        setStatus(`Using ${label}. Calibrating ambient noise...`);
-        const profile = await microphoneApi.calibrate(3);
-        renderData({ calibrationProfile: profile, deviceLabel: label });
-        setStatus('Calibration complete. Streaming live analysis...');
-
-        realtimeActive = true;
-        stopButton.disabled = false;
         startButton.disabled = true;
 
-        await microphoneApi.startRealtime((frame) => {
-          if (!realtimeActive) return;
-          renderData(frame);
+        setStatus("Initializing Scanner...");
+
+        liveTag.textContent = "BOOTING";
+
+        telemetryStatus.textContent = "BOOTING";
+
+        warningText.textContent =
+          "Requesting microphone access and preparing acoustic analysis.";
+
+        addEvent(
+          "Scanner boot sequence",
+          "Initializing microphone subsystem."
+        );
+
+
+        const stream =
+          await getAudioStream();
+
+
+        const track =
+          stream.getAudioTracks()[0];
+
+
+        const label =
+          track?.label ||
+          "Default microphone";
+
+
+        microphoneApi =
+          new MicrophoneAPI(stream);
+
+
+        document.body.classList.add("active");
+
+
+        setStatus("Calibrating Environment...");
+
+        liveTag.textContent = "CALIBRATING";
+
+        telemetryStatus.textContent = "CALIBRATING";
+
+
+        addEvent(
+          "Microphone connected",
+          label
+        );
+
+
+        warningText.textContent =
+          "Calibrating ambient noise. Keep the environment as quiet as possible.";
+
+
+        const profile =
+          await microphoneApi.calibrate(3);
+
+
+        renderData({
+
+          calibrationProfile: profile,
+
+          deviceLabel: label,
+
+          timestamp: new Date().toISOString()
+
         });
+
+
+        addEvent(
+          "Environmental baseline captured",
+          "Ambient acoustic profile established."
+        );
+
+
+        setStatus("Scanner Online");
+
+        liveTag.textContent = "LIVE";
+
+        telemetryStatus.textContent = "ONLINE";
+
+        warningText.textContent =
+          "Monitoring acoustic activity. Visual indicators represent microphone signal changes and are not proof of paranormal activity.";
+
+
+        realtimeActive = true;
+
+        stopButton.disabled = false;
+
+
+        await microphoneApi.startRealtime(
+          frame => {
+
+            if (!realtimeActive) return;
+
+            renderData(frame);
+
+            processFrame(frame);
+
+          }
+        );
+
+
       } catch (error) {
-        setStatus(describeError(error));
-        output.textContent = `${error?.name || 'Error'}: ${error?.message || String(error)}`;
+
+        const info =
+          describeError(error);
+
+
+        setStatus(info.title);
+
+        liveTag.textContent = "ERROR";
+
+        telemetryStatus.textContent = "ERROR";
+
+
+        warningText.textContent =
+          info.message;
+
+
+        output.textContent =
+          `${error?.name || "Error"}: ${error?.message || String(error)}`;
+
+
+        addEvent(
+          info.title,
+          info.message,
+          info.type
+        );
+
+
+        startButton.disabled = false;
+
+        stopButton.disabled = true;
+
       }
+
     }
+
+
+    /* =========================================================
+       FRAME ANALYSIS
+    ========================================================= */
+
+    function processFrame(frame) {
+
+      let numericValue = 0;
+
+
+      if (typeof frame === "number") {
+
+        numericValue = Math.abs(frame);
+
+      }
+
+
+      else if (frame && typeof frame === "object") {
+
+        const candidates = [
+
+          frame.amplitude,
+
+          frame.volume,
+
+          frame.level,
+
+          frame.rms,
+
+          frame.signal,
+
+          frame.energy
+
+        ];
+
+
+        for (const candidate of candidates) {
+
+          if (
+            typeof candidate === "number" &&
+            Number.isFinite(candidate)
+          ) {
+
+            numericValue =
+              Math.abs(candidate);
+
+            break;
+
+          }
+
+        }
+
+      }
+
+
+      numericValue =
+        Math.max(
+          0,
+          Math.min(1, numericValue)
+        );
+
+
+      const displayValue =
+        numericValue < 1
+          ? numericValue.toFixed(3)
+          : Math.round(numericValue);
+
+
+      signalMetric.textContent =
+        displayValue;
+
+
+      signalNumber.textContent =
+        numericValue < .01
+          ? "0"
+          : Math.round(numericValue * 100);
+
+
+      animateBars(numericValue);
+
+
+      if (
+        frame &&
+        typeof frame === "object"
+      ) {
+
+        const noise =
+          frame.noiseFloor ??
+          frame.noise ??
+          frame.ambientNoise;
+
+
+        if (typeof noise === "number") {
+
+          noiseMetric.textContent =
+            noise.toFixed(3);
+
+        }
+
+
+        const detection =
+          frame.detection ??
+          frame.event ??
+          frame.status;
+
+
+        if (detection) {
+
+          detectionMetric.textContent =
+            String(detection)
+              .slice(0, 16)
+              .toUpperCase();
+
+        }
+
+      }
+
+
+      /*
+       * This is intentionally conservative.
+       * High microphone amplitude is NOT automatically
+       * treated as paranormal evidence.
+       */
+
+      if (numericValue > .85) {
+
+        if (lastDetection !== "HIGH") {
+
+          addEvent(
+            "High acoustic amplitude",
+            "Strong environmental audio detected.",
+            "warning"
+          );
+
+          warningText.textContent =
+            "Strong acoustic activity detected. Check the environment before interpreting the signal.";
+
+          lastDetection = "HIGH";
+
+        }
+
+      }
+
+      else if (numericValue > .55) {
+
+        lastDetection = "MEDIUM";
+
+      }
+
+      else {
+
+        if (lastDetection !== "LOW") {
+
+          warningText.textContent =
+            "Acoustic field appears relatively stable.";
+
+          lastDetection = "LOW";
+
+        }
+
+      }
+
+    }
+
+
+    /* =========================================================
+       STOP
+    ========================================================= */
 
     function stopDemo() {
+
       realtimeActive = false;
-      microphoneApi?.stopRealtime();
-      microphoneApi?.stream?.getTracks().forEach((track) => track.stop());
-      setStatus('Stopped. You can start again anytime.');
+
+
+      try {
+
+        microphoneApi?.stopRealtime();
+
+      } catch (_) {}
+
+
+      try {
+
+        microphoneApi?.stream
+          ?.getTracks()
+          .forEach(track => track.stop());
+
+      } catch (_) {}
+
+
+      microphoneApi = null;
+
+
+      document.body.classList.remove("active");
+
+
+      setStatus("System Standby");
+
+      liveTag.textContent = "STANDBY";
+
+      telemetryStatus.textContent = "OFFLINE";
+
+
+      warningText.textContent =
+        "Scanner terminated. No microphone data is currently being processed.";
+
+
+      detectionMetric.textContent =
+        "IDLE";
+
+
+      addEvent(
+        "Scanner terminated",
+        "Microphone monitoring stopped."
+      );
+
+
       stopButton.disabled = true;
+
       startButton.disabled = false;
+
     }
 
-    startButton.addEventListener('click', startDemo);
-    stopButton.addEventListener('click', stopDemo);
+
+    /* =========================================================
+       BUTTONS
+    ========================================================= */
+
+    startButton.addEventListener(
+      "click",
+      startDemo
+    );
+
+
+    stopButton.addEventListener(
+      "click",
+      stopDemo
+    );
+
+
+    /* =========================================================
+       IDLE VISUALIZER
+    ========================================================= */
+
+    function idleVisualizer() {
+
+      if (!realtimeActive) {
+
+        const t =
+          Date.now() / 500;
+
+
+        bars.forEach((bar, index) => {
+
+          const value =
+            7 +
+            (
+              Math.sin(
+                t + index * .5
+              ) + 1
+            ) * 4;
+
+
+          bar.style.height =
+            `${value}%`;
+
+        });
+
+      }
+
+
+      requestAnimationFrame(
+        idleVisualizer
+      );
+
+    }
+
+
+    idleVisualizer();
+
+
+    /* =========================================================
+       INITIAL EVENT
+    ========================================================= */
+
+    addEvent(
+      "MICX ready",
+      "Acoustic intelligence interface standing by."
+    );
+
   </script>
+
 </body>
 </html>
